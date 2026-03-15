@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+.pytest_cache/
+.mypy_cache/
+
+# Virtual envs
+.venv/
+venv/
+
+# Local environment and secrets
+.env
+.env.local
+
+# App data and outputs
+outputs/*.md
+outputs/*.json
+!outputs/.gitkeep
+data/*.bak
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+
+# NotebookLM MCP and local auth artifacts
+.cursor/mcp.local.json
+.cursor/auth/
+auth/
+notebooklm-auth/

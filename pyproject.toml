@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "research-copilot"
+version = "0.1.0"
+description = "Local orchestration layer for NotebookLM research workflows."
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [
+  { name = "Nikita Marshchonok" }
+]
+dependencies = [
+  "fastapi>=0.116.0",
+  "pydantic>=2.9.0",
+  "pydantic-settings>=2.5.2",
+  "requests>=2.32.3",
+  "streamlit>=1.39.0",
+  "typer>=0.12.5",
+  "uvicorn>=0.31.0",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.3.3",
+  "httpx>=0.27.2",
+]
+
+[project.scripts]
+research-copilot = "app.cli:app"
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+addopts = "-q"
