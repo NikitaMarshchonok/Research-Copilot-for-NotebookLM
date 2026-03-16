@@ -11,12 +11,15 @@ from app.core.logger import setup_logging
 from app.models.notebook import NotebookCreate
 from app.models.query import AskRequest
 from app.models.report import ResearchRequest
+from app.models.template import TemplateCreateRequest
 
 app = typer.Typer(help="Research Copilot CLI")
 notebooks_app = typer.Typer(help="Notebook registry commands")
 history_app = typer.Typer(help="History commands")
+templates_app = typer.Typer(help="Template commands")
 app.add_typer(notebooks_app, name="notebooks")
 app.add_typer(history_app, name="history")
+app.add_typer(templates_app, name="templates")
 
 
 def _container():
@@ -30,8 +33,9 @@ def init_project() -> None:
     container = _container()
     container.notebooks_store.ensure()
     container.history_store.ensure()
+    container.templates_store.ensure()
     container.settings.outputs_path.mkdir(parents=True, exist_ok=True)
-    typer.echo("Initialized data/ and outputs/ directories.")
+    typer.echo("Initialized data/ and outputs/ directories (notebooks, history, templates).")
 
 
 @notebooks_app.command("list")
@@ -121,6 +125,25 @@ def research(
     typer.echo(f"Saved json: {response.output_json_path}")
 
 
+@app.command("research-template")
+def research_template(
+    topic: str = typer.Option(..., "--topic"),
+    template_name: str = typer.Option(..., "--template"),
+    notebook_id: Optional[str] = typer.Option(None, "--notebook-id"),
+    artifact_type: Optional[str] = typer.Option(None, "--artifact-type"),
+) -> None:
+    container = _container()
+    response = container.research_service.research_from_template(
+        topic=topic,
+        template_name=template_name,
+        notebook_id=notebook_id,
+        artifact_type=artifact_type,
+    )
+    typer.echo(f"Research report generated from template: {response.id}")
+    typer.echo(f"Saved markdown: {response.output_markdown_path}")
+    typer.echo(f"Saved json: {response.output_json_path}")
+
+
 @app.command("export")
 def export(
     history_id: str = typer.Option(..., "--history-id"),
@@ -146,6 +169,38 @@ def history_get(history_id: str = typer.Argument(...)) -> None:
     container = _container()
     item = container.research_service.get_history_item(history_id)
     typer.echo(item.model_dump_json(indent=2))
+
+
+@templates_app.command("list")
+def templates_list() -> None:
+    container = _container()
+    templates = container.template_service.list_templates()
+    if not templates:
+        typer.echo("No templates found.")
+        return
+    for template in templates:
+        typer.echo(
+            f"{template.id} | {template.name} | {template.artifact_type} | questions={len(template.questions)}"
+        )
+
+
+@templates_app.command("add")
+def templates_add(
+    name: str = typer.Option(..., "--name"),
+    questions: List[str] = typer.Option(..., "--question"),
+    description: str = typer.Option("", "--description"),
+    artifact_type: str = typer.Option("study_guide", "--artifact-type"),
+) -> None:
+    container = _container()
+    template = container.template_service.add_template(
+        TemplateCreateRequest(
+            name=name,
+            questions=questions,
+            description=description,
+            artifact_type=artifact_type,
+        )
+    )
+    typer.echo(f"Template added: {template.id} ({template.name})")
 
 
 if __name__ == "__main__":

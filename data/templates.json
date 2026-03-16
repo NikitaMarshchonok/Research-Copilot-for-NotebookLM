@@ -1,0 +1,69 @@
+{
+  "items": [
+    {
+      "id": "67e4211d-3f56-47b5-9a41-5dd0fddfea39",
+      "name": "summary",
+      "description": "Quick source-grounded topic summary.",
+      "questions": [
+        "What is {topic}?",
+        "What are the key concepts and terminology of {topic}?",
+        "What are the main practical takeaways about {topic}?"
+      ],
+      "artifact_type": "summary",
+      "created_at": "2026-03-16T20:11:45.695001Z",
+      "updated_at": "2026-03-16T20:11:45.695073Z"
+    },
+    {
+      "id": "ebd056d0-e899-44f8-b0ce-726d6a2b31e0",
+      "name": "faq",
+      "description": "Generate a concise FAQ for a topic.",
+      "questions": [
+        "What are the most common beginner questions about {topic}?",
+        "What are typical misconceptions about {topic}?",
+        "What edge cases or caveats should be in an FAQ about {topic}?"
+      ],
+      "artifact_type": "faq",
+      "created_at": "2026-03-16T20:11:45.695293Z",
+      "updated_at": "2026-03-16T20:11:45.695294Z"
+    },
+    {
+      "id": "7ea1a9cf-3994-4574-a351-3984bf660096",
+      "name": "comparison",
+      "description": "Compare alternatives and trade-offs.",
+      "questions": [
+        "What are the major options/approaches related to {topic}?",
+        "What are pros and cons of each option for {topic}?",
+        "Which option is best for small teams vs enterprise cases in {topic}?"
+      ],
+      "artifact_type": "comparison",
+      "created_at": "2026-03-16T20:11:45.695304Z",
+      "updated_at": "2026-03-16T20:11:45.695304Z"
+    },
+    {
+      "id": "7a415ea4-4867-41ae-a1ae-6029c028c220",
+      "name": "study_guide",
+      "description": "Structured study plan and checkpoints.",
+      "questions": [
+        "What fundamentals should be learned first for {topic}?",
+        "What is an effective learning path for {topic} from basic to advanced?",
+        "What practical exercises can validate understanding of {topic}?"
+      ],
+      "artifact_type": "study_guide",
+      "created_at": "2026-03-16T20:11:45.695314Z",
+      "updated_at": "2026-03-16T20:11:45.695315Z"
+    },
+    {
+      "id": "de1d0373-0bd6-4a05-beee-5fed9ae73475",
+      "name": "implementation_notes",
+      "description": "Implementation-oriented notes for engineers.",
+      "questions": [
+        "What architecture patterns are recommended for {topic}?",
+        "What integration risks and failure modes exist for {topic}?",
+        "What checklist should be followed when implementing {topic} in production?"
+      ],
+      "artifact_type": "implementation_notes",
+      "created_at": "2026-03-16T20:11:45.695323Z",
+      "updated_at": "2026-03-16T20:11:45.695323Z"
+    }
+  ]
+}

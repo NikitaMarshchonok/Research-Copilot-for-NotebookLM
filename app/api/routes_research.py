@@ -7,6 +7,7 @@ from app.models.export import ExportRequest, ExportResponse
 from app.models.history import HistoryItem, HistorySummary
 from app.models.query import AskRequest, AskResponse
 from app.models.report import ResearchRequest, ResearchResponse
+from app.models.template import RunTemplateRequest, TemplateCreateRequest, TemplateEntry
 
 router = APIRouter(tags=["research"])
 
@@ -53,3 +54,27 @@ def get_history_item(
     history_id: str, container: ServiceContainer = Depends(get_container)
 ) -> HistoryItem:
     return container.research_service.get_history_item(history_id)
+
+
+@router.get("/templates", response_model=list[TemplateEntry])
+def list_templates(container: ServiceContainer = Depends(get_container)) -> list[TemplateEntry]:
+    return container.template_service.list_templates()
+
+
+@router.post("/templates", response_model=TemplateEntry)
+def add_template(
+    payload: TemplateCreateRequest, container: ServiceContainer = Depends(get_container)
+) -> TemplateEntry:
+    return container.template_service.add_template(payload)
+
+
+@router.post("/research/template", response_model=ResearchResponse)
+def research_from_template(
+    payload: RunTemplateRequest, container: ServiceContainer = Depends(get_container)
+) -> ResearchResponse:
+    return container.research_service.research_from_template(
+        topic=payload.topic,
+        template_name=payload.template_name,
+        notebook_id=payload.notebook_id,
+        artifact_type=payload.artifact_type,
+    )

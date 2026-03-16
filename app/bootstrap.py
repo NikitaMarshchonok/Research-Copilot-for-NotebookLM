@@ -9,6 +9,7 @@ from app.services.export_service import ExportService
 from app.services.notebook_registry import NotebookRegistryService
 from app.services.notebooklm_client import BridgeNotebookLMClient, NotebookLMClient, StubNotebookLMClient
 from app.services.research_service import ResearchService
+from app.services.template_service import TemplateService
 from app.storage.file_store import FileStore
 from app.storage.json_store import JsonStore
 
@@ -18,7 +19,9 @@ class ServiceContainer:
     settings: Settings
     notebooks_store: JsonStore
     history_store: JsonStore
+    templates_store: JsonStore
     notebook_registry: NotebookRegistryService
+    template_service: TemplateService
     research_service: ResearchService
 
 
@@ -38,11 +41,14 @@ def build_container() -> ServiceContainer:
         default_value=NotebookRegistryState().model_dump(mode="json"),
     )
     history_store = JsonStore(settings.data_path / "history.json", default_value={"items": []})
+    templates_store = JsonStore(settings.data_path / "templates.json", default_value={"items": []})
 
     notebook_registry = NotebookRegistryService(notebooks_store)
+    template_service = TemplateService(templates_store)
     export_service = ExportService(FileStore(settings.outputs_path))
     research_service = ResearchService(
         registry=notebook_registry,
+        template_service=template_service,
         notebooklm_client=_build_notebooklm_client(settings),
         export_service=export_service,
         history_store=history_store,
@@ -52,6 +58,8 @@ def build_container() -> ServiceContainer:
         settings=settings,
         notebooks_store=notebooks_store,
         history_store=history_store,
+        templates_store=templates_store,
         notebook_registry=notebook_registry,
+        template_service=template_service,
         research_service=research_service,
     )

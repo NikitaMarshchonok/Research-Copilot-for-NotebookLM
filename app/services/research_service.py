@@ -11,6 +11,7 @@ from app.services.export_service import ExportService
 from app.services.notebook_registry import NotebookRegistryService
 from app.services.notebooklm_client import NotebookLMClient
 from app.services.prompt_templates import build_question
+from app.services.template_service import TemplateService
 from app.storage.json_store import JsonStore
 
 logger = logging.getLogger(__name__)
@@ -20,11 +21,13 @@ class ResearchService:
     def __init__(
         self,
         registry: NotebookRegistryService,
+        template_service: TemplateService,
         notebooklm_client: NotebookLMClient,
         export_service: ExportService,
         history_store: JsonStore,
     ) -> None:
         self.registry = registry
+        self.template_service = template_service
         self.notebooklm_client = notebooklm_client
         self.export_service = export_service
         self.history_store = history_store
@@ -93,6 +96,23 @@ class ResearchService:
             "markdown": response.output_markdown_path or "",
             "json": response.output_json_path or "",
         }
+
+    def research_from_template(
+        self,
+        topic: str,
+        template_name: str,
+        notebook_id: str | None = None,
+        artifact_type: str | None = None,
+    ) -> ResearchResponse:
+        questions, template_artifact = self.template_service.render_questions(template_name, topic)
+        return self.research(
+            ResearchRequest(
+                topic=topic,
+                questions=questions,
+                notebook_id=notebook_id,
+                artifact_type=artifact_type or template_artifact,
+            )
+        )
 
     def list_history(self) -> list[HistorySummary]:
         history = self.history_store.read()

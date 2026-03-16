@@ -39,13 +39,15 @@ research-copilot/
 │   │   ├── history.py
 │   │   ├── notebook.py
 │   │   ├── query.py
-│   │   └── report.py
+│   │   ├── report.py
+│   │   └── template.py
 │   ├── services/
 │   │   ├── export_service.py
 │   │   ├── notebook_registry.py
 │   │   ├── notebooklm_client.py
 │   │   ├── prompt_templates.py
-│   │   └── research_service.py
+│   │   ├── research_service.py
+│   │   └── template_service.py
 │   ├── storage/
 │   │   ├── file_store.py
 │   │   └── json_store.py
@@ -55,7 +57,8 @@ research-copilot/
 │   └── ui.py
 ├── data/
 │   ├── history.json
-│   └── notebooks.json
+│   ├── notebooks.json
+│   └── templates.json
 ├── outputs/
 │   └── .gitkeep
 ├── scripts/
@@ -66,7 +69,9 @@ research-copilot/
 │   ├── test_health.py
 │   ├── test_history.py
 │   ├── test_notebooks_active.py
-│   └── test_registry.py
+│   ├── test_registry.py
+│   ├── test_templates.py
+│   └── test_templates_endpoint.py
 ├── .env.example
 ├── .gitignore
 ├── Makefile
@@ -115,6 +120,14 @@ python -m app.cli research \
   --question "What is MCP?" \
   --question "What are risks of unofficial integrations?" \
   --artifact-type study_guide
+
+python -m app.cli templates list
+python -m app.cli templates add --name "tech-comparison" \
+  --question "What is {topic}?" \
+  --question "Compare top options for {topic}" \
+  --artifact-type comparison
+
+python -m app.cli research-template --topic "MCP tooling" --template comparison
 ```
 
 Export by history id:
@@ -144,6 +157,9 @@ Endpoints:
 - `POST /notebooks/select`
 - `POST /ask`
 - `POST /research`
+- `GET /templates`
+- `POST /templates`
+- `POST /research/template`
 - `GET /history`
 - `GET /history/{history_id}`
 - `POST /export` (alias: `POST /exports`)
