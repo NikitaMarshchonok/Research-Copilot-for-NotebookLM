@@ -3,6 +3,8 @@ from __future__ import annotations
 import logging
 from typing import List
 
+from app.core.exceptions import NotFoundError
+from app.models.history import HistoryItem, HistorySummary
 from app.models.query import AskRequest, AskResponse
 from app.models.report import ResearchRequest, ResearchResponse
 from app.services.export_service import ExportService
@@ -74,11 +76,7 @@ class ResearchService:
         return response
 
     def export_from_history(self, item_id: str) -> dict[str, str]:
-        history = self.history_store.read()
-        items = history.get("items", [])
-        matched = next((entry for entry in items if entry.get("payload", {}).get("id") == item_id), None)
-        if not matched:
-            raise ValueError(f"History item not found: {item_id}")
+        matched = self.get_history_item(item_id).model_dump(mode="json")
 
         payload = matched["payload"]
         if matched["type"] == "ask":
@@ -95,6 +93,34 @@ class ResearchService:
             "markdown": response.output_markdown_path or "",
             "json": response.output_json_path or "",
         }
+
+    def list_history(self) -> list[HistorySummary]:
+        history = self.history_store.read()
+        summaries: list[HistorySummary] = []
+        for entry in history.get("items", []):
+            payload = entry.get("payload", {})
+            item_type = entry.get("type", "ask")
+            title = payload.get("question") or payload.get("topic") or "Untitled history item"
+            summaries.append(
+                HistorySummary(
+                    id=str(payload.get("id", "")),
+                    type=item_type,
+                    created_at=payload.get("created_at"),
+                    title=title,
+                )
+            )
+        return summaries
+
+    def get_history_item(self, item_id: str) -> HistoryItem:
+        history = self.history_store.read()
+        items = history.get("items", [])
+        matched = next(
+            (entry for entry in items if entry.get("payload", {}).get("id") == item_id),
+            None,
+        )
+        if not matched:
+            raise NotFoundError(f"History item not found: {item_id}")
+        return HistoryItem.model_validate(matched)
 
     def _append_history(self, item: dict) -> None:
         history = self.history_store.read()

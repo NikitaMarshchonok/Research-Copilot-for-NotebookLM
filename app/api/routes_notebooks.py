@@ -3,7 +3,13 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends
 
 from app.bootstrap import ServiceContainer, build_container
-from app.models.notebook import NotebookCreate, NotebookEntry, NotebookSelectRequest
+from app.core.exceptions import NotFoundError
+from app.models.notebook import (
+    ActiveNotebookResponse,
+    NotebookCreate,
+    NotebookEntry,
+    NotebookSelectRequest,
+)
 
 router = APIRouter(prefix="/notebooks", tags=["notebooks"])
 
@@ -29,3 +35,14 @@ def select_notebook(
     payload: NotebookSelectRequest, container: ServiceContainer = Depends(get_container)
 ) -> NotebookEntry:
     return container.notebook_registry.select_active(payload.notebook_id)
+
+
+@router.get("/active", response_model=ActiveNotebookResponse)
+def get_active_notebook(
+    container: ServiceContainer = Depends(get_container),
+) -> ActiveNotebookResponse:
+    try:
+        notebook = container.notebook_registry.get_active()
+        return ActiveNotebookResponse(active_notebook_id=notebook.id, notebook=notebook)
+    except NotFoundError:
+        return ActiveNotebookResponse(active_notebook_id=None, notebook=None)

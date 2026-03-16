@@ -36,6 +36,7 @@ research-copilot/
 │   │   └── logger.py
 │   ├── models/
 │   │   ├── export.py
+│   │   ├── history.py
 │   │   ├── notebook.py
 │   │   ├── query.py
 │   │   └── report.py
@@ -57,9 +58,14 @@ research-copilot/
 │   └── notebooks.json
 ├── outputs/
 │   └── .gitkeep
+├── scripts/
+│   └── notebooklm_bridge.py
 ├── tests/
+│   ├── test_bridge_client.py
 │   ├── test_exports.py
 │   ├── test_health.py
+│   ├── test_history.py
+│   ├── test_notebooks_active.py
 │   └── test_registry.py
 ├── .env.example
 ├── .gitignore
@@ -92,6 +98,7 @@ Notebook registry:
 python -m app.cli notebooks list
 python -m app.cli notebooks add --name "AI Agents" --url "https://notebooklm.google.com/notebook/..."
 python -m app.cli notebooks select <NOTEBOOK_ID>
+python -m app.cli notebooks active
 ```
 
 Ask one question:
@@ -114,6 +121,8 @@ Export by history id:
 
 ```bash
 python -m app.cli export --history-id <ASK_OR_RESEARCH_ID>
+python -m app.cli history list
+python -m app.cli history get <ASK_OR_RESEARCH_ID>
 ```
 
 Artifacts are written into `outputs/`.
@@ -130,10 +139,13 @@ Endpoints:
 
 - `GET /health`
 - `GET /notebooks`
+- `GET /notebooks/active`
 - `POST /notebooks`
 - `POST /notebooks/select`
 - `POST /ask`
 - `POST /research`
+- `GET /history`
+- `GET /history/{history_id}`
 - `POST /export` (alias: `POST /exports`)
 
 Open docs: <http://127.0.0.1:8000/docs>
@@ -179,12 +191,28 @@ Configure bridge mode in `.env`:
 ```env
 NOTEBOOKLM_CONNECTOR_MODE=bridge
 NOTEBOOKLM_BRIDGE_COMMAND=python scripts/notebooklm_bridge.py
+NOTEBOOKLM_MCP_COMMAND=npx -y notebooklm-mcp@latest
+NOTEBOOKLM_MCP_ASK_TOOL=
+NOTEBOOKLM_MCP_TIMEOUT_SECONDS=45
 ```
 
 Bridge contract:
 
 - stdin JSON: `{"notebook_url":"...","question":"..."}`
 - stdout JSON: `{"answer":"...","sources":["..."],"raw":{...}}`
+
+Quick local bridge check:
+
+```bash
+echo '{"notebook_url":"https://notebooklm.google.com/notebook/...","question":"Give me a short summary"}' \
+  | python scripts/notebooklm_bridge.py
+```
+
+If the bridge cannot auto-detect the MCP tool name, set it explicitly in `.env`:
+
+```env
+NOTEBOOKLM_MCP_ASK_TOOL=<exact_tool_name_from_mcp_server>
+```
 
 ## Testing
 

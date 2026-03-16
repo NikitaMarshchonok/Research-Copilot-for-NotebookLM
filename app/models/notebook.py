@@ -35,3 +35,8 @@ class NotebookSelectRequest(BaseModel):
 class NotebookRegistryState(BaseModel):
     active_notebook_id: Optional[str] = None
     items: List[NotebookEntry] = Field(default_factory=list)
+
+
+class ActiveNotebookResponse(BaseModel):
+    active_notebook_id: Optional[str] = None
+    notebook: Optional[NotebookEntry] = None

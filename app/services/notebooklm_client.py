@@ -52,8 +52,16 @@ class BridgeNotebookLMClient(NotebookLMClient):
             raise IntegrationError(f"Bridge command failed to start: {exc}") from exc
 
         if process.returncode != 0:
+            bridge_error = ""
+            try:
+                maybe_error = json.loads(process.stdout or "{}")
+                if isinstance(maybe_error, dict):
+                    bridge_error = str(maybe_error.get("error", "")).strip()
+            except json.JSONDecodeError:
+                bridge_error = ""
             raise IntegrationError(
                 "Bridge command failed.\n"
+                f"bridge_error: {bridge_error}\n"
                 f"stdout: {process.stdout}\n"
                 f"stderr: {process.stderr}"
             )

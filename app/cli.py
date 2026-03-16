@@ -5,6 +5,7 @@ from typing import List, Optional
 
 import typer
 
+from app.core.exceptions import NotFoundError
 from app.bootstrap import build_container
 from app.core.logger import setup_logging
 from app.models.notebook import NotebookCreate
@@ -13,7 +14,9 @@ from app.models.report import ResearchRequest
 
 app = typer.Typer(help="Research Copilot CLI")
 notebooks_app = typer.Typer(help="Notebook registry commands")
+history_app = typer.Typer(help="History commands")
 app.add_typer(notebooks_app, name="notebooks")
+app.add_typer(history_app, name="history")
 
 
 def _container():
@@ -68,6 +71,16 @@ def notebooks_select(notebook_id: str = typer.Argument(...)) -> None:
     typer.echo(f"Active notebook set: {notebook.id} ({notebook.name})")
 
 
+@notebooks_app.command("active")
+def notebooks_active() -> None:
+    container = _container()
+    try:
+        notebook = container.notebook_registry.get_active()
+        typer.echo(f"{notebook.id} | {notebook.name} | {notebook.url}")
+    except NotFoundError as exc:
+        typer.echo(str(exc))
+
+
 @app.command("ask")
 def ask(
     question: str = typer.Option(..., "--question"),
@@ -115,6 +128,24 @@ def export(
     container = _container()
     paths = container.research_service.export_from_history(history_id)
     typer.echo(json.dumps(paths, ensure_ascii=False, indent=2))
+
+
+@history_app.command("list")
+def history_list() -> None:
+    container = _container()
+    items = container.research_service.list_history()
+    if not items:
+        typer.echo("History is empty.")
+        return
+    for item in items:
+        typer.echo(f"{item.id} | {item.type} | {item.title} | {item.created_at}")
+
+
+@history_app.command("get")
+def history_get(history_id: str = typer.Argument(...)) -> None:
+    container = _container()
+    item = container.research_service.get_history_item(history_id)
+    typer.echo(item.model_dump_json(indent=2))
 
 
 if __name__ == "__main__":
