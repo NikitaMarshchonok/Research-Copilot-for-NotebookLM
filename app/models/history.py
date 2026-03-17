@@ -7,7 +7,7 @@ from pydantic import BaseModel
 
 
 class HistoryItem(BaseModel):
-    type: Literal["ask", "research"]
+    type: Literal["ask", "research", "batch_research"]
     payload: dict[str, Any]
 
 
@@ -17,6 +17,6 @@ class HistoryListResponse(BaseModel):
 
 class HistorySummary(BaseModel):
     id: str
-    type: Literal["ask", "research"]
+    type: Literal["ask", "research", "batch_research"]
     created_at: datetime | None = None
     title: str

@@ -6,7 +6,12 @@ from typing import List
 from app.core.exceptions import NotFoundError
 from app.models.history import HistoryItem, HistorySummary
 from app.models.query import AskRequest, AskResponse
-from app.models.report import ResearchRequest, ResearchResponse
+from app.models.report import (
+    BatchResearchFailure,
+    BatchResearchResponse,
+    ResearchRequest,
+    ResearchResponse,
+)
 from app.services.export_service import ExportService
 from app.services.notebook_registry import NotebookRegistryService
 from app.services.notebooklm_client import NotebookLMClient
@@ -90,11 +95,19 @@ class ResearchService:
                 "json": response.output_json_path or "",
             }
 
-        response = ResearchResponse.model_validate(payload)
-        response = self.export_service.export_research(response)
+        if matched["type"] == "research":
+            response = ResearchResponse.model_validate(payload)
+            response = self.export_service.export_research(response)
+            return {
+                "markdown": response.output_markdown_path or "",
+                "json": response.output_json_path or "",
+            }
+
+        batch_response = BatchResearchResponse.model_validate(payload)
+        batch_response = self.export_service.export_batch_research(batch_response)
         return {
-            "markdown": response.output_markdown_path or "",
-            "json": response.output_json_path or "",
+            "markdown": batch_response.output_markdown_path or "",
+            "json": batch_response.output_json_path or "",
         }
 
     def research_from_template(
@@ -114,13 +127,54 @@ class ResearchService:
             )
         )
 
+    def batch_research_from_template(
+        self,
+        topics: list[str],
+        template_name: str,
+        notebook_id: str | None = None,
+        artifact_type: str | None = None,
+        continue_on_error: bool = True,
+    ) -> BatchResearchResponse:
+        items: list[ResearchResponse] = []
+        failures: list[BatchResearchFailure] = []
+
+        for topic in topics:
+            try:
+                report = self.research_from_template(
+                    topic=topic,
+                    template_name=template_name,
+                    notebook_id=notebook_id,
+                    artifact_type=artifact_type,
+                )
+                items.append(report)
+            except Exception as exc:  # noqa: BLE001
+                failures.append(BatchResearchFailure(topic=topic, error=str(exc)))
+                if not continue_on_error:
+                    break
+
+        response = BatchResearchResponse(
+            template_name=template_name,
+            notebook_id=notebook_id,
+            artifact_type=artifact_type,
+            items=items,
+            failures=failures,
+        )
+        response = self.export_service.export_batch_research(response)
+        self._append_history({"type": "batch_research", "payload": response.model_dump(mode="json")})
+        return response
+
     def list_history(self) -> list[HistorySummary]:
         history = self.history_store.read()
         summaries: list[HistorySummary] = []
         for entry in history.get("items", []):
             payload = entry.get("payload", {})
             item_type = entry.get("type", "ask")
-            title = payload.get("question") or payload.get("topic") or "Untitled history item"
+            title = (
+                payload.get("question")
+                or payload.get("topic")
+                or payload.get("template_name")
+                or "Untitled history item"
+            )
             summaries.append(
                 HistorySummary(
                     id=str(payload.get("id", "")),

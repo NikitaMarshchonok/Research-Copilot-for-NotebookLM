@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from app.models.query import AskResponse
-from app.models.report import ResearchResponse
+from app.models.report import BatchResearchResponse, ResearchResponse
 from app.storage.file_store import FileStore
 
 
@@ -24,6 +24,20 @@ class ExportService:
         md_path = self.file_store.save_markdown(response.topic, markdown, prefix="research")
         json_path = self.file_store.save_json(
             response.topic, response.model_dump(mode="json"), prefix="research"
+        )
+        response.output_markdown_path = str(md_path)
+        response.output_json_path = str(json_path)
+        return response
+
+    def export_batch_research(self, response: BatchResearchResponse) -> BatchResearchResponse:
+        markdown = self._build_batch_markdown(response)
+        md_path = self.file_store.save_markdown(
+            f"batch-{response.template_name}", markdown, prefix="batch-research"
+        )
+        json_path = self.file_store.save_json(
+            f"batch-{response.template_name}",
+            response.model_dump(mode="json"),
+            prefix="batch-research",
         )
         response.output_markdown_path = str(md_path)
         response.output_json_path = str(json_path)
@@ -62,4 +76,29 @@ class ExportService:
             else:
                 lines.append("- No sources")
             lines.append("")
+        return "\n".join(lines)
+
+    def _build_batch_markdown(self, response: BatchResearchResponse) -> str:
+        lines = [
+            "# Batch Research Report",
+            "",
+            "## Metadata",
+            f"- template_name: `{response.template_name}`",
+            f"- artifact_type: `{response.artifact_type}`",
+            f"- notebook_id: `{response.notebook_id}`",
+            f"- completed_topics: {len(response.items)}",
+            f"- failed_topics: {len(response.failures)}",
+            "",
+            "## Topic Reports",
+        ]
+        for item in response.items:
+            lines.append(f"- `{item.topic}` -> `{item.output_markdown_path}`")
+        if not response.items:
+            lines.append("- No successful reports.")
+        lines.append("")
+        lines.append("## Failures")
+        for failure in response.failures:
+            lines.append(f"- {failure.topic}: {failure.error}")
+        if not response.failures:
+            lines.append("- No failures.")
         return "\n".join(lines)

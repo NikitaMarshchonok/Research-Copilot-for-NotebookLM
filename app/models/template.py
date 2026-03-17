@@ -33,3 +33,11 @@ class RunTemplateRequest(BaseModel):
     template_name: str
     notebook_id: Optional[str] = None
     artifact_type: Optional[str] = None
+
+
+class RunBatchTemplateRequest(BaseModel):
+    topics: list[str] = Field(min_length=1)
+    template_name: str
+    notebook_id: Optional[str] = None
+    artifact_type: Optional[str] = None
+    continue_on_error: bool = True

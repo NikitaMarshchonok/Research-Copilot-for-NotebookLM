@@ -6,8 +6,13 @@ from app.bootstrap import ServiceContainer, build_container
 from app.models.export import ExportRequest, ExportResponse
 from app.models.history import HistoryItem, HistorySummary
 from app.models.query import AskRequest, AskResponse
-from app.models.report import ResearchRequest, ResearchResponse
-from app.models.template import RunTemplateRequest, TemplateCreateRequest, TemplateEntry
+from app.models.report import BatchResearchResponse, ResearchRequest, ResearchResponse
+from app.models.template import (
+    RunBatchTemplateRequest,
+    RunTemplateRequest,
+    TemplateCreateRequest,
+    TemplateEntry,
+)
 
 router = APIRouter(tags=["research"])
 
@@ -77,4 +82,17 @@ def research_from_template(
         template_name=payload.template_name,
         notebook_id=payload.notebook_id,
         artifact_type=payload.artifact_type,
+    )
+
+
+@router.post("/research/batch-template", response_model=BatchResearchResponse)
+def research_batch_from_template(
+    payload: RunBatchTemplateRequest, container: ServiceContainer = Depends(get_container)
+) -> BatchResearchResponse:
+    return container.research_service.batch_research_from_template(
+        topics=payload.topics,
+        template_name=payload.template_name,
+        notebook_id=payload.notebook_id,
+        artifact_type=payload.artifact_type,
+        continue_on_error=payload.continue_on_error,
     )

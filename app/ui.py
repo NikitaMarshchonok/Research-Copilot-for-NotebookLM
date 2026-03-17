@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import os
 import requests
 import streamlit as st
 
-API_BASE = "http://127.0.0.1:8000"
+API_BASE = os.getenv("RESEARCH_COPILOT_API_BASE", "http://127.0.0.1:8000")
+ARTIFACT_TYPES = ["summary", "faq", "comparison", "study_guide", "implementation_notes"]
 
 st.set_page_config(page_title="Research Copilot", layout="wide")
 st.title("Research Copilot + NotebookLM")
@@ -96,6 +98,102 @@ if st.button("Run Research"):
             st.json(report)
         except requests.RequestException as exc:
             st.error(f"Research failed: {exc}")
+
+st.subheader("Template-driven Research")
+templates: list[dict] = []
+template_map: dict[str, dict] = {}
+
+try:
+    templates = api_get("/templates")
+    template_map = {entry["name"]: entry for entry in templates}
+except requests.RequestException as exc:
+    st.warning(f"Could not load templates: {exc}")
+
+template_left, template_right = st.columns(2)
+
+with template_left:
+    with st.form("add_template"):
+        st.caption("Create custom template")
+        template_name = st.text_input("Template name")
+        template_description = st.text_area("Template description", height=80)
+        template_questions_raw = st.text_area(
+            "Template questions (one per line, use {topic} placeholder)",
+            height=120,
+        )
+        template_artifact = st.selectbox("Template artifact type", ARTIFACT_TYPES, key="template_artifact")
+        template_submitted = st.form_submit_button("Add Template")
+        if template_submitted:
+            questions = [line.strip() for line in template_questions_raw.splitlines() if line.strip()]
+            if not questions:
+                st.error("Template must contain at least one question.")
+            else:
+                try:
+                    created = api_post(
+                        "/templates",
+                        {
+                            "name": template_name,
+                            "description": template_description,
+                            "questions": questions,
+                            "artifact_type": template_artifact,
+                        },
+                    )
+                    st.success(f"Template added: {created['name']}")
+                except requests.RequestException as exc:
+                    st.error(f"Template creation failed: {exc}")
+
+with template_right:
+    template_names = sorted(template_map.keys())
+    selected_template = st.selectbox(
+        "Template",
+        options=template_names or ["<no templates>"],
+        key="selected_template",
+    )
+    if template_names:
+        st.caption(template_map[selected_template].get("description", ""))
+        st.write("Questions:")
+        for index, question_text in enumerate(template_map[selected_template].get("questions", []), start=1):
+            st.write(f"{index}. {question_text}")
+
+    single_topic = st.text_input("Template run topic")
+    template_override_artifact = st.selectbox(
+        "Override artifact type (optional behavior: same value still valid)",
+        ARTIFACT_TYPES,
+        key="template_override_artifact",
+    )
+    if st.button("Run Template Research", disabled=not bool(template_names)):
+        try:
+            report = api_post(
+                "/research/template",
+                {
+                    "topic": single_topic,
+                    "template_name": selected_template,
+                    "artifact_type": template_override_artifact,
+                },
+            )
+            st.json(report)
+        except requests.RequestException as exc:
+            st.error(f"Template research failed: {exc}")
+
+st.subheader("Batch Template Research")
+batch_topics_raw = st.text_area("Batch topics (one per line)", height=120)
+batch_continue = st.checkbox("Continue on error", value=True)
+if st.button("Run Batch Template Research", disabled=not bool(template_map)):
+    topics = [line.strip() for line in batch_topics_raw.splitlines() if line.strip()]
+    if not topics:
+        st.error("Please provide at least one topic for batch run.")
+    else:
+        try:
+            batch = api_post(
+                "/research/batch-template",
+                {
+                    "topics": topics,
+                    "template_name": selected_template,
+                    "continue_on_error": batch_continue,
+                },
+            )
+            st.json(batch)
+        except requests.RequestException as exc:
+            st.error(f"Batch template research failed: {exc}")
 
 st.subheader("History")
 if st.button("Refresh History"):

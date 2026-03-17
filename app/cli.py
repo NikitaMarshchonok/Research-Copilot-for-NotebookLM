@@ -144,6 +144,29 @@ def research_template(
     typer.echo(f"Saved json: {response.output_json_path}")
 
 
+@app.command("research-batch-template")
+def research_batch_template(
+    topics: List[str] = typer.Option(..., "--topic"),
+    template_name: str = typer.Option(..., "--template"),
+    notebook_id: Optional[str] = typer.Option(None, "--notebook-id"),
+    artifact_type: Optional[str] = typer.Option(None, "--artifact-type"),
+    continue_on_error: bool = typer.Option(True, "--continue-on-error/--fail-fast"),
+) -> None:
+    container = _container()
+    response = container.research_service.batch_research_from_template(
+        topics=topics,
+        template_name=template_name,
+        notebook_id=notebook_id,
+        artifact_type=artifact_type,
+        continue_on_error=continue_on_error,
+    )
+    typer.echo(f"Batch research generated: {response.id}")
+    typer.echo(f"Completed topics: {len(response.items)}")
+    typer.echo(f"Failed topics: {len(response.failures)}")
+    typer.echo(f"Saved markdown: {response.output_markdown_path}")
+    typer.echo(f"Saved json: {response.output_json_path}")
+
+
 @app.command("export")
 def export(
     history_id: str = typer.Option(..., "--history-id"),

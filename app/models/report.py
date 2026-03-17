@@ -29,3 +29,28 @@ class ResearchResponse(BaseModel):
     created_at: datetime = Field(default_factory=utcnow)
     output_markdown_path: Optional[str] = None
     output_json_path: Optional[str] = None
+
+
+class BatchResearchTemplateRequest(BaseModel):
+    topics: List[str] = Field(min_length=1)
+    template_name: str
+    notebook_id: Optional[str] = None
+    artifact_type: Optional[str] = None
+    continue_on_error: bool = True
+
+
+class BatchResearchFailure(BaseModel):
+    topic: str
+    error: str
+
+
+class BatchResearchResponse(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid4()))
+    template_name: str
+    notebook_id: Optional[str] = None
+    artifact_type: Optional[str] = None
+    items: List[ResearchResponse] = Field(default_factory=list)
+    failures: List[BatchResearchFailure] = Field(default_factory=list)
+    created_at: datetime = Field(default_factory=utcnow)
+    output_markdown_path: Optional[str] = None
+    output_json_path: Optional[str] = None

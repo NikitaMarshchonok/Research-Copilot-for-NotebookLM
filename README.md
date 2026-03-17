@@ -65,6 +65,7 @@ research-copilot/
 │   └── notebooklm_bridge.py
 ├── tests/
 │   ├── test_bridge_client.py
+│   ├── test_batch_template_endpoint.py
 │   ├── test_exports.py
 │   ├── test_health.py
 │   ├── test_history.py
@@ -128,6 +129,12 @@ python -m app.cli templates add --name "tech-comparison" \
   --artifact-type comparison
 
 python -m app.cli research-template --topic "MCP tooling" --template comparison
+
+python -m app.cli research-batch-template \
+  --topic "MCP basics" \
+  --topic "NotebookLM orchestration" \
+  --template study_guide \
+  --continue-on-error
 ```
 
 Export by history id:
@@ -160,6 +167,7 @@ Endpoints:
 - `GET /templates`
 - `POST /templates`
 - `POST /research/template`
+- `POST /research/batch-template`
 - `GET /history`
 - `GET /history/{history_id}`
 - `POST /export` (alias: `POST /exports`)
@@ -173,6 +181,20 @@ streamlit run app/ui.py
 ```
 
 The UI is intentionally minimal and uses the local FastAPI backend.
+It supports:
+
+- notebook add/select
+- ask and manual research
+- template add/list
+- template-based single research
+- batch template research
+- history view
+
+Optional API URL override for UI:
+
+```bash
+RESEARCH_COPILOT_API_BASE=http://127.0.0.1:8000 streamlit run app/ui.py
+```
 
 ## NotebookLM MCP in Cursor
 
