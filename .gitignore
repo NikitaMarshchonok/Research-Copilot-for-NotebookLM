@@ -3,6 +3,7 @@ __pycache__/
 *.py[cod]
 *.so
 .pytest_cache/
+.pytest_runtime/
 .mypy_cache/
 
 # Virtual envs
@@ -17,6 +18,8 @@ venv/
 outputs/*.md
 outputs/*.json
 !outputs/.gitkeep
+workspaces/**/outputs/*.md
+workspaces/**/outputs/*.json
 data/*.bak
 
 # OS / editor

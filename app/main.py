@@ -8,6 +8,7 @@ from fastapi.responses import JSONResponse
 from app.api.routes_health import router as health_router
 from app.api.routes_notebooks import router as notebooks_router
 from app.api.routes_research import router as research_router
+from app.api.routes_workspaces import router as workspaces_router
 from app.bootstrap import build_container
 from app.core.exceptions import AppError
 from app.core.logger import setup_logging
@@ -20,6 +21,7 @@ app = FastAPI(title=container.settings.app_name, version="0.1.0")
 app.include_router(health_router)
 app.include_router(notebooks_router)
 app.include_router(research_router)
+app.include_router(workspaces_router)
 
 
 @app.exception_handler(AppError)

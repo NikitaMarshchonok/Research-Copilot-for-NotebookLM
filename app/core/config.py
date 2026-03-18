@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
     data_dir: str = "data"
     outputs_dir: str = "outputs"
+    workspaces_dir: str = "workspaces"
     notebooklm_connector_mode: str = "stub"
     notebooklm_bridge_command: str = ""
 
@@ -32,6 +33,10 @@ class Settings(BaseSettings):
     @property
     def outputs_path(self) -> Path:
         return (self.root_dir / self.outputs_dir).resolve()
+
+    @property
+    def workspaces_path(self) -> Path:
+        return (self.root_dir / self.workspaces_dir).resolve()
 
 
 @lru_cache(maxsize=1)

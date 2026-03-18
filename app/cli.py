@@ -12,14 +12,17 @@ from app.models.notebook import NotebookCreate
 from app.models.query import AskRequest
 from app.models.report import ResearchRequest
 from app.models.template import TemplateCreateRequest
+from app.models.workspace import WorkspaceCreateRequest
 
 app = typer.Typer(help="Research Copilot CLI")
 notebooks_app = typer.Typer(help="Notebook registry commands")
 history_app = typer.Typer(help="History commands")
 templates_app = typer.Typer(help="Template commands")
+workspaces_app = typer.Typer(help="Workspace commands")
 app.add_typer(notebooks_app, name="notebooks")
 app.add_typer(history_app, name="history")
 app.add_typer(templates_app, name="templates")
+app.add_typer(workspaces_app, name="workspaces")
 
 
 def _container():
@@ -31,11 +34,14 @@ def _container():
 @app.command("init")
 def init_project() -> None:
     container = _container()
+    container.workspace_service.get_active_context()
     container.notebooks_store.ensure()
     container.history_store.ensure()
     container.templates_store.ensure()
-    container.settings.outputs_path.mkdir(parents=True, exist_ok=True)
-    typer.echo("Initialized data/ and outputs/ directories (notebooks, history, templates).")
+    typer.echo(
+        f"Initialized workspace '{container.active_workspace}' "
+        "(notebooks, history, templates, outputs)."
+    )
 
 
 @notebooks_app.command("list")
@@ -224,6 +230,41 @@ def templates_add(
         )
     )
     typer.echo(f"Template added: {template.id} ({template.name})")
+
+
+@workspaces_app.command("list")
+def workspaces_list() -> None:
+    container = _container()
+    current = container.workspace_service.get_current_response().active_workspace
+    for workspace in container.workspace_service.list_workspaces():
+        marker = "*" if workspace.name == current else " "
+        typer.echo(f"{marker} {workspace.name} | {workspace.description}")
+
+
+@workspaces_app.command("create")
+def workspaces_create(
+    name: str = typer.Option(..., "--name"),
+    description: str = typer.Option("", "--description"),
+) -> None:
+    container = _container()
+    workspace = container.workspace_service.create_workspace(
+        WorkspaceCreateRequest(name=name, description=description)
+    )
+    typer.echo(f"Workspace created: {workspace.name}")
+
+
+@workspaces_app.command("select")
+def workspaces_select(name: str = typer.Option(..., "--name")) -> None:
+    container = _container()
+    workspace = container.workspace_service.select_workspace(name)
+    typer.echo(f"Active workspace set: {workspace.name}")
+
+
+@workspaces_app.command("current")
+def workspaces_current() -> None:
+    container = _container()
+    current = container.workspace_service.get_current_response()
+    typer.echo(current.model_dump_json(indent=2))
 
 
 if __name__ == "__main__":

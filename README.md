@@ -29,7 +29,8 @@ research-copilot/
 │   ├── api/
 │   │   ├── routes_health.py
 │   │   ├── routes_notebooks.py
-│   │   └── routes_research.py
+│   │   ├── routes_research.py
+│   │   └── routes_workspaces.py
 │   ├── core/
 │   │   ├── config.py
 │   │   ├── exceptions.py
@@ -40,14 +41,16 @@ research-copilot/
 │   │   ├── notebook.py
 │   │   ├── query.py
 │   │   ├── report.py
-│   │   └── template.py
+│   │   ├── template.py
+│   │   └── workspace.py
 │   ├── services/
 │   │   ├── export_service.py
 │   │   ├── notebook_registry.py
 │   │   ├── notebooklm_client.py
 │   │   ├── prompt_templates.py
 │   │   ├── research_service.py
-│   │   └── template_service.py
+│   │   ├── template_service.py
+│   │   └── workspace_service.py
 │   ├── storage/
 │   │   ├── file_store.py
 │   │   └── json_store.py
@@ -58,7 +61,8 @@ research-copilot/
 ├── data/
 │   ├── history.json
 │   ├── notebooks.json
-│   └── templates.json
+│   ├── templates.json
+│   └── workspaces.json
 ├── outputs/
 │   └── .gitkeep
 ├── scripts/
@@ -72,7 +76,9 @@ research-copilot/
 │   ├── test_notebooks_active.py
 │   ├── test_registry.py
 │   ├── test_templates.py
-│   └── test_templates_endpoint.py
+│   ├── test_templates_endpoint.py
+│   ├── test_workspace_service.py
+│   └── test_workspaces_endpoint.py
 ├── .env.example
 ├── .gitignore
 ├── Makefile
@@ -90,6 +96,11 @@ cp .env.example .env
 python -m app.cli init
 ```
 
+Multi-project workspace support:
+
+- default workspace uses root `data/` and `outputs/`
+- named workspaces use `workspaces/<name>/data` and `workspaces/<name>/outputs`
+
 ## CLI commands
 
 Show help:
@@ -105,6 +116,11 @@ python -m app.cli notebooks list
 python -m app.cli notebooks add --name "AI Agents" --url "https://notebooklm.google.com/notebook/..."
 python -m app.cli notebooks select <NOTEBOOK_ID>
 python -m app.cli notebooks active
+
+python -m app.cli workspaces list
+python -m app.cli workspaces create --name "client-a" --description "Client A research"
+python -m app.cli workspaces select --name "client-a"
+python -m app.cli workspaces current
 ```
 
 Ask one question:
@@ -158,6 +174,10 @@ uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 Endpoints:
 
 - `GET /health`
+- `GET /workspaces`
+- `POST /workspaces`
+- `POST /workspaces/select`
+- `GET /workspaces/current`
 - `GET /notebooks`
 - `GET /notebooks/active`
 - `POST /notebooks`

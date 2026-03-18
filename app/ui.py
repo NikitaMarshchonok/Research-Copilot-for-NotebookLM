@@ -22,6 +22,36 @@ def api_post(path: str, payload: dict) -> dict:
     return response.json()
 
 
+st.subheader("Workspace")
+try:
+    current_workspace = api_get("/workspaces/current")
+    st.caption(
+        f"Active: {current_workspace['active_workspace']} | "
+        f"data: {current_workspace['data_path']} | outputs: {current_workspace['outputs_path']}"
+    )
+    workspaces = api_get("/workspaces")
+    workspace_names = [item["name"] for item in workspaces]
+    workspace_col_1, workspace_col_2 = st.columns(2)
+    with workspace_col_1:
+        selected_workspace = st.selectbox("Select workspace", workspace_names, key="workspace_select")
+        if st.button("Switch Workspace"):
+            api_post("/workspaces/select", {"name": selected_workspace})
+            st.success(f"Workspace switched to: {selected_workspace}")
+    with workspace_col_2:
+        with st.form("create_workspace"):
+            workspace_name = st.text_input("New workspace name")
+            workspace_description = st.text_input("Workspace description")
+            create_workspace = st.form_submit_button("Create Workspace")
+            if create_workspace:
+                created = api_post(
+                    "/workspaces",
+                    {"name": workspace_name, "description": workspace_description},
+                )
+                st.success(f"Workspace created: {created['name']}")
+except requests.RequestException as exc:
+    st.warning(f"Could not load workspaces: {exc}")
+
+
 left, right = st.columns(2)
 
 with left:
