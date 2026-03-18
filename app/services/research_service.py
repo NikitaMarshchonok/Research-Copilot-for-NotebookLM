@@ -22,6 +22,12 @@ from app.storage.json_store import JsonStore
 
 logger = logging.getLogger(__name__)
 
+BUNDLE_PRESETS: dict[str, list[str]] = {
+    "article-pack": ["research", "ask", "batch_research"],
+    "tech-brief-pack": ["research", "batch_research"],
+    "study-pack": ["research", "ask"],
+}
+
 
 class ResearchService:
     def __init__(
@@ -235,6 +241,32 @@ class ResearchService:
     ) -> dict[str, str]:
         latest = self.get_latest_artifact(item_type=item_type, template_name=template_name)
         return self.export_from_history(latest.id)
+
+    def export_artifact_bundle(
+        self, bundle_name: str = "article-pack", template_name: str | None = None
+    ) -> dict[str, str | int]:
+        filters = BUNDLE_PRESETS.get(bundle_name, BUNDLE_PRESETS["article-pack"])
+        selected: list[ArtifactItem] = []
+        seen_ids: set[str] = set()
+        for item_type in filters:
+            artifacts = self.list_artifacts(item_type=item_type, template_name=template_name)
+            if not artifacts:
+                continue
+            latest = artifacts[0]
+            if latest.id in seen_ids:
+                continue
+            selected.append(latest)
+            seen_ids.add(latest.id)
+
+        if not selected:
+            raise NotFoundError("No artifacts available for selected bundle filter.")
+
+        paths = self.export_service.export_artifact_bundle(bundle_name=bundle_name, items=selected)
+        return {
+            "markdown": paths["markdown"],
+            "json": paths["json"],
+            "included_count": len(selected),
+        }
 
     def get_history_item(self, item_id: str) -> HistoryItem:
         history = self.history_store.read()

@@ -4,7 +4,13 @@ from fastapi import APIRouter, Depends, Query
 
 from app.bootstrap import ServiceContainer, build_container
 from app.models.artifact import ArtifactItem
-from app.models.export import ExportRequest, ExportResponse, LatestExportRequest
+from app.models.export import (
+    BundleExportRequest,
+    BundleExportResponse,
+    ExportRequest,
+    ExportResponse,
+    LatestExportRequest,
+)
 from app.models.history import HistoryItem, HistorySummary
 from app.models.query import AskRequest, AskResponse
 from app.models.report import BatchResearchResponse, ResearchRequest, ResearchResponse
@@ -59,6 +65,21 @@ def export_latest(
         template_name=payload.template_name,
     )
     return ExportResponse(markdown=paths["markdown"], json_path=paths["json"])
+
+
+@router.post("/exports/bundle", response_model=BundleExportResponse)
+def export_bundle(
+    payload: BundleExportRequest, container: ServiceContainer = Depends(get_container)
+) -> BundleExportResponse:
+    paths = container.research_service.export_artifact_bundle(
+        bundle_name=payload.bundle_name,
+        template_name=payload.template_name,
+    )
+    return BundleExportResponse(
+        markdown=str(paths["markdown"]),
+        json_path=str(paths["json"]),
+        included_count=int(paths["included_count"]),
+    )
 
 
 @router.get("/history", response_model=list[HistorySummary])

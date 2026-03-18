@@ -282,3 +282,20 @@ with artifact_col_2:
             st.json(exported)
         except requests.RequestException as exc:
             st.error(f"Latest artifact export failed: {exc}")
+
+st.subheader("Artifact Bundles")
+bundle_name = st.selectbox(
+    "Bundle preset",
+    ["article-pack", "tech-brief-pack", "study-pack"],
+    key="bundle_name",
+)
+bundle_template = st.text_input("Bundle template filter (optional)", key="bundle_template")
+if st.button("Export Bundle"):
+    try:
+        payload: dict[str, str] = {"bundle_name": bundle_name}
+        if bundle_template.strip():
+            payload["template_name"] = bundle_template.strip()
+        bundle = api_post("/exports/bundle", payload)
+        st.json(bundle)
+    except requests.RequestException as exc:
+        st.error(f"Bundle export failed: {exc}")

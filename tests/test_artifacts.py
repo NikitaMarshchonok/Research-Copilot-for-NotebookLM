@@ -27,6 +27,13 @@ def test_artifacts_latest_endpoint_not_found_on_empty_history() -> None:
     assert response.status_code in (200, 400)
 
 
+def test_export_bundle_endpoint_status() -> None:
+    client = TestClient(app)
+    response = client.post("/exports/bundle", json={"bundle_name": "article-pack"})
+    # On empty runtime data it may return app-level 400; otherwise 200.
+    assert response.status_code in (200, 400)
+
+
 def test_artifacts_filter_by_type(tmp_path: Path) -> None:
     notebooks_store = JsonStore(
         tmp_path / "notebooks.json",
@@ -80,3 +87,8 @@ def test_artifacts_filter_by_type(tmp_path: Path) -> None:
 
     by_template = service.list_artifacts(template_name="summary")
     assert by_template == []
+
+    bundle = service.export_artifact_bundle(bundle_name="article-pack")
+    assert "markdown" in bundle
+    assert "json" in bundle
+    assert bundle["included_count"] >= 1

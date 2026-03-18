@@ -199,6 +199,19 @@ def export_latest(
     typer.echo(json.dumps(paths, ensure_ascii=False, indent=2))
 
 
+@app.command("export-bundle")
+def export_bundle(
+    bundle_name: str = typer.Option("article-pack", "--name"),
+    template_name: Optional[str] = typer.Option(None, "--template"),
+) -> None:
+    container = _container()
+    paths = container.research_service.export_artifact_bundle(
+        bundle_name=bundle_name,
+        template_name=template_name,
+    )
+    typer.echo(json.dumps(paths, ensure_ascii=False, indent=2))
+
+
 @history_app.command("list")
 def history_list() -> None:
     container = _container()

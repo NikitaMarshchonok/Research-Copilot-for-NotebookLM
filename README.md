@@ -165,6 +165,7 @@ python -m app.cli artifacts list
 python -m app.cli artifacts list --type research
 python -m app.cli artifacts latest --type batch_research --template summary
 python -m app.cli export-latest --type research
+python -m app.cli export-bundle --name article-pack
 ```
 
 Artifacts are written into `outputs/`.
@@ -199,6 +200,7 @@ Endpoints:
 - `GET /artifacts` (optional query: `item_type=ask|research|batch_research`, `template_name=...`)
 - `GET /artifacts/latest` (same optional filters)
 - `POST /exports/latest`
+- `POST /exports/bundle` (bundle presets: `article-pack`, `tech-brief-pack`, `study-pack`)
 - `POST /export` (alias: `POST /exports`)
 
 Open docs: <http://127.0.0.1:8000/docs>
@@ -220,6 +222,7 @@ It supports:
 - history view
 - artifacts index with filters
 - quick "latest artifact" lookup and export
+- artifact bundle export for article/brief packs
 
 Optional API URL override for UI:
 
