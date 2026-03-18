@@ -36,6 +36,7 @@ research-copilot/
 │   │   ├── exceptions.py
 │   │   └── logger.py
 │   ├── models/
+│   │   ├── artifact.py
 │   │   ├── export.py
 │   │   ├── history.py
 │   │   ├── notebook.py
@@ -68,6 +69,7 @@ research-copilot/
 ├── scripts/
 │   └── notebooklm_bridge.py
 ├── tests/
+│   ├── test_artifacts.py
 │   ├── test_bridge_client.py
 │   ├── test_batch_template_endpoint.py
 │   ├── test_exports.py
@@ -159,6 +161,8 @@ Export by history id:
 python -m app.cli export --history-id <ASK_OR_RESEARCH_ID>
 python -m app.cli history list
 python -m app.cli history get <ASK_OR_RESEARCH_ID>
+python -m app.cli artifacts list
+python -m app.cli artifacts list --type research
 ```
 
 Artifacts are written into `outputs/`.
@@ -190,6 +194,7 @@ Endpoints:
 - `POST /research/batch-template`
 - `GET /history`
 - `GET /history/{history_id}`
+- `GET /artifacts` (optional query: `item_type=ask|research|batch_research`)
 - `POST /export` (alias: `POST /exports`)
 
 Open docs: <http://127.0.0.1:8000/docs>
@@ -209,6 +214,7 @@ It supports:
 - template-based single research
 - batch template research
 - history view
+- artifacts index with filters
 
 Optional API URL override for UI:
 

@@ -232,3 +232,19 @@ if st.button("Refresh History"):
         st.json(history)
     except requests.RequestException as exc:
         st.error(f"History load failed: {exc}")
+
+st.subheader("Artifacts Index")
+artifact_filter = st.selectbox(
+    "Artifact type filter",
+    ["all", "ask", "research", "batch_research"],
+    key="artifact_filter",
+)
+if st.button("Refresh Artifacts"):
+    try:
+        path = "/artifacts"
+        if artifact_filter != "all":
+            path = f"/artifacts?item_type={artifact_filter}"
+        artifacts = api_get(path)
+        st.json(artifacts)
+    except requests.RequestException as exc:
+        st.error(f"Artifacts load failed: {exc}")

@@ -4,6 +4,7 @@ import logging
 from typing import List
 
 from app.core.exceptions import NotFoundError
+from app.models.artifact import ArtifactItem
 from app.models.history import HistoryItem, HistorySummary
 from app.models.query import AskRequest, AskResponse
 from app.models.report import (
@@ -184,6 +185,36 @@ class ResearchService:
                 )
             )
         return summaries
+
+    def list_artifacts(self, item_type: str | None = None) -> list[ArtifactItem]:
+        history = self.history_store.read()
+        artifacts: list[ArtifactItem] = []
+        for entry in history.get("items", []):
+            entry_type = str(entry.get("type", "ask"))
+            if item_type and entry_type != item_type:
+                continue
+            payload = entry.get("payload", {})
+            title = (
+                payload.get("question")
+                or payload.get("topic")
+                or payload.get("template_name")
+                or "Untitled artifact"
+            )
+            artifacts.append(
+                ArtifactItem(
+                    id=str(payload.get("id", "")),
+                    type=entry_type,  # type: ignore[arg-type]
+                    title=str(title),
+                    created_at=payload.get("created_at"),
+                    markdown_path=payload.get("output_markdown_path"),
+                    json_path=payload.get("output_json_path"),
+                )
+            )
+        artifacts.sort(
+            key=lambda item: item.created_at.isoformat() if item.created_at else "",
+            reverse=True,
+        )
+        return artifacts
 
     def get_history_item(self, item_id: str) -> HistoryItem:
         history = self.history_store.read()

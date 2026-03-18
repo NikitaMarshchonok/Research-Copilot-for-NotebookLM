@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 
 from app.bootstrap import ServiceContainer, build_container
+from app.models.artifact import ArtifactItem
 from app.models.export import ExportRequest, ExportResponse
 from app.models.history import HistoryItem, HistorySummary
 from app.models.query import AskRequest, AskResponse
@@ -52,6 +53,14 @@ def export_item_plural(
 @router.get("/history", response_model=list[HistorySummary])
 def list_history(container: ServiceContainer = Depends(get_container)) -> list[HistorySummary]:
     return container.research_service.list_history()
+
+
+@router.get("/artifacts", response_model=list[ArtifactItem])
+def list_artifacts(
+    item_type: str | None = Query(default=None, description="ask|research|batch_research"),
+    container: ServiceContainer = Depends(get_container),
+) -> list[ArtifactItem]:
+    return container.research_service.list_artifacts(item_type=item_type)
 
 
 @router.get("/history/{history_id}", response_model=HistoryItem)

@@ -17,10 +17,12 @@ from app.models.workspace import WorkspaceCreateRequest
 app = typer.Typer(help="Research Copilot CLI")
 notebooks_app = typer.Typer(help="Notebook registry commands")
 history_app = typer.Typer(help="History commands")
+artifacts_app = typer.Typer(help="Artifacts index commands")
 templates_app = typer.Typer(help="Template commands")
 workspaces_app = typer.Typer(help="Workspace commands")
 app.add_typer(notebooks_app, name="notebooks")
 app.add_typer(history_app, name="history")
+app.add_typer(artifacts_app, name="artifacts")
 app.add_typer(templates_app, name="templates")
 app.add_typer(workspaces_app, name="workspaces")
 
@@ -198,6 +200,23 @@ def history_get(history_id: str = typer.Argument(...)) -> None:
     container = _container()
     item = container.research_service.get_history_item(history_id)
     typer.echo(item.model_dump_json(indent=2))
+
+
+@artifacts_app.command("list")
+def artifacts_list(
+    item_type: Optional[str] = typer.Option(
+        None, "--type", help="Filter by: ask, research, batch_research"
+    ),
+) -> None:
+    container = _container()
+    items = container.research_service.list_artifacts(item_type=item_type)
+    if not items:
+        typer.echo("No artifacts found.")
+        return
+    for item in items:
+        typer.echo(
+            f"{item.id} | {item.type} | {item.title} | md={item.markdown_path} | json={item.json_path}"
+        )
 
 
 @templates_app.command("list")
