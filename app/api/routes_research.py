@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, Query
 
 from app.bootstrap import ServiceContainer, build_container
 from app.models.artifact import ArtifactItem
-from app.models.export import ExportRequest, ExportResponse
+from app.models.export import ExportRequest, ExportResponse, LatestExportRequest
 from app.models.history import HistoryItem, HistorySummary
 from app.models.query import AskRequest, AskResponse
 from app.models.report import BatchResearchResponse, ResearchRequest, ResearchResponse
@@ -50,6 +50,17 @@ def export_item_plural(
     return ExportResponse(markdown=paths["markdown"], json_path=paths["json"])
 
 
+@router.post("/exports/latest", response_model=ExportResponse)
+def export_latest(
+    payload: LatestExportRequest, container: ServiceContainer = Depends(get_container)
+) -> ExportResponse:
+    paths = container.research_service.export_latest_artifact(
+        item_type=payload.item_type,
+        template_name=payload.template_name,
+    )
+    return ExportResponse(markdown=paths["markdown"], json_path=paths["json"])
+
+
 @router.get("/history", response_model=list[HistorySummary])
 def list_history(container: ServiceContainer = Depends(get_container)) -> list[HistorySummary]:
     return container.research_service.list_history()
@@ -58,9 +69,23 @@ def list_history(container: ServiceContainer = Depends(get_container)) -> list[H
 @router.get("/artifacts", response_model=list[ArtifactItem])
 def list_artifacts(
     item_type: str | None = Query(default=None, description="ask|research|batch_research"),
+    template_name: str | None = Query(default=None, description="Filter by template name"),
     container: ServiceContainer = Depends(get_container),
 ) -> list[ArtifactItem]:
-    return container.research_service.list_artifacts(item_type=item_type)
+    return container.research_service.list_artifacts(
+        item_type=item_type, template_name=template_name
+    )
+
+
+@router.get("/artifacts/latest", response_model=ArtifactItem)
+def get_latest_artifact(
+    item_type: str | None = Query(default=None, description="ask|research|batch_research"),
+    template_name: str | None = Query(default=None, description="Filter by template name"),
+    container: ServiceContainer = Depends(get_container),
+) -> ArtifactItem:
+    return container.research_service.get_latest_artifact(
+        item_type=item_type, template_name=template_name
+    )
 
 
 @router.get("/history/{history_id}", response_model=HistoryItem)

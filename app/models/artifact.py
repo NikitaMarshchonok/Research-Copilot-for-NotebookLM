@@ -13,6 +13,7 @@ class ArtifactItem(BaseModel):
     id: str
     type: ArtifactType
     title: str
+    template_name: Optional[str] = None
     created_at: Optional[datetime] = None
     markdown_path: Optional[str] = None
     json_path: Optional[str] = None

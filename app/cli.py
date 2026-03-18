@@ -184,6 +184,21 @@ def export(
     typer.echo(json.dumps(paths, ensure_ascii=False, indent=2))
 
 
+@app.command("export-latest")
+def export_latest(
+    item_type: Optional[str] = typer.Option(
+        None, "--type", help="Filter by: ask, research, batch_research"
+    ),
+    template_name: Optional[str] = typer.Option(None, "--template"),
+) -> None:
+    container = _container()
+    paths = container.research_service.export_latest_artifact(
+        item_type=item_type,
+        template_name=template_name,
+    )
+    typer.echo(json.dumps(paths, ensure_ascii=False, indent=2))
+
+
 @history_app.command("list")
 def history_list() -> None:
     container = _container()
@@ -217,6 +232,24 @@ def artifacts_list(
         typer.echo(
             f"{item.id} | {item.type} | {item.title} | md={item.markdown_path} | json={item.json_path}"
         )
+
+
+@artifacts_app.command("latest")
+def artifacts_latest(
+    item_type: Optional[str] = typer.Option(
+        None, "--type", help="Filter by: ask, research, batch_research"
+    ),
+    template_name: Optional[str] = typer.Option(None, "--template"),
+) -> None:
+    container = _container()
+    item = container.research_service.get_latest_artifact(
+        item_type=item_type,
+        template_name=template_name,
+    )
+    typer.echo(
+        f"{item.id} | {item.type} | {item.title} | template={item.template_name} | "
+        f"md={item.markdown_path} | json={item.json_path}"
+    )
 
 
 @templates_app.command("list")

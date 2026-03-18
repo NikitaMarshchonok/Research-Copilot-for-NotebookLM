@@ -186,7 +186,9 @@ class ResearchService:
             )
         return summaries
 
-    def list_artifacts(self, item_type: str | None = None) -> list[ArtifactItem]:
+    def list_artifacts(
+        self, item_type: str | None = None, template_name: str | None = None
+    ) -> list[ArtifactItem]:
         history = self.history_store.read()
         artifacts: list[ArtifactItem] = []
         for entry in history.get("items", []):
@@ -194,6 +196,9 @@ class ResearchService:
             if item_type and entry_type != item_type:
                 continue
             payload = entry.get("payload", {})
+            payload_template = payload.get("template_name")
+            if template_name and str(payload_template or "").strip().lower() != template_name.strip().lower():
+                continue
             title = (
                 payload.get("question")
                 or payload.get("topic")
@@ -205,6 +210,7 @@ class ResearchService:
                     id=str(payload.get("id", "")),
                     type=entry_type,  # type: ignore[arg-type]
                     title=str(title),
+                    template_name=str(payload_template) if payload_template else None,
                     created_at=payload.get("created_at"),
                     markdown_path=payload.get("output_markdown_path"),
                     json_path=payload.get("output_json_path"),
@@ -215,6 +221,20 @@ class ResearchService:
             reverse=True,
         )
         return artifacts
+
+    def get_latest_artifact(
+        self, item_type: str | None = None, template_name: str | None = None
+    ) -> ArtifactItem:
+        artifacts = self.list_artifacts(item_type=item_type, template_name=template_name)
+        if not artifacts:
+            raise NotFoundError("No artifacts found for the provided filter.")
+        return artifacts[0]
+
+    def export_latest_artifact(
+        self, item_type: str | None = None, template_name: str | None = None
+    ) -> dict[str, str]:
+        latest = self.get_latest_artifact(item_type=item_type, template_name=template_name)
+        return self.export_from_history(latest.id)
 
     def get_history_item(self, item_id: str) -> HistoryItem:
         history = self.history_store.read()

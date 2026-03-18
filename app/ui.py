@@ -239,6 +239,10 @@ artifact_filter = st.selectbox(
     ["all", "ask", "research", "batch_research"],
     key="artifact_filter",
 )
+latest_template_filter = st.text_input(
+    "Latest artifact template filter (optional, for template/batch)",
+    key="latest_template_filter",
+)
 if st.button("Refresh Artifacts"):
     try:
         path = "/artifacts"
@@ -248,3 +252,33 @@ if st.button("Refresh Artifacts"):
         st.json(artifacts)
     except requests.RequestException as exc:
         st.error(f"Artifacts load failed: {exc}")
+
+artifact_col_1, artifact_col_2 = st.columns(2)
+with artifact_col_1:
+    if st.button("Get Latest Artifact"):
+        try:
+            path = "/artifacts/latest"
+            params = []
+            if artifact_filter != "all":
+                params.append(f"item_type={artifact_filter}")
+            if latest_template_filter.strip():
+                params.append(f"template_name={latest_template_filter.strip()}")
+            if params:
+                path = f"{path}?{'&'.join(params)}"
+            latest = api_get(path)
+            st.json(latest)
+        except requests.RequestException as exc:
+            st.error(f"Latest artifact load failed: {exc}")
+
+with artifact_col_2:
+    if st.button("Export Latest Artifact"):
+        try:
+            payload: dict[str, str] = {}
+            if artifact_filter != "all":
+                payload["item_type"] = artifact_filter
+            if latest_template_filter.strip():
+                payload["template_name"] = latest_template_filter.strip()
+            exported = api_post("/exports/latest", payload)
+            st.json(exported)
+        except requests.RequestException as exc:
+            st.error(f"Latest artifact export failed: {exc}")

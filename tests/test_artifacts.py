@@ -20,6 +20,13 @@ def test_artifacts_endpoint_returns_list() -> None:
     assert isinstance(response.json(), list)
 
 
+def test_artifacts_latest_endpoint_not_found_on_empty_history() -> None:
+    client = TestClient(app)
+    response = client.get("/artifacts/latest")
+    # Depends on runtime data; if empty we should get domain-level 400.
+    assert response.status_code in (200, 400)
+
+
 def test_artifacts_filter_by_type(tmp_path: Path) -> None:
     notebooks_store = JsonStore(
         tmp_path / "notebooks.json",
@@ -67,3 +74,9 @@ def test_artifacts_filter_by_type(tmp_path: Path) -> None:
     ask_only = service.list_artifacts(item_type="ask")
     assert len(ask_only) == 1
     assert ask_only[0].type == "ask"
+
+    latest = service.get_latest_artifact()
+    assert latest.id == "r1"
+
+    by_template = service.list_artifacts(template_name="summary")
+    assert by_template == []

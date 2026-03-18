@@ -163,6 +163,8 @@ python -m app.cli history list
 python -m app.cli history get <ASK_OR_RESEARCH_ID>
 python -m app.cli artifacts list
 python -m app.cli artifacts list --type research
+python -m app.cli artifacts latest --type batch_research --template summary
+python -m app.cli export-latest --type research
 ```
 
 Artifacts are written into `outputs/`.
@@ -194,7 +196,9 @@ Endpoints:
 - `POST /research/batch-template`
 - `GET /history`
 - `GET /history/{history_id}`
-- `GET /artifacts` (optional query: `item_type=ask|research|batch_research`)
+- `GET /artifacts` (optional query: `item_type=ask|research|batch_research`, `template_name=...`)
+- `GET /artifacts/latest` (same optional filters)
+- `POST /exports/latest`
 - `POST /export` (alias: `POST /exports`)
 
 Open docs: <http://127.0.0.1:8000/docs>
@@ -215,6 +219,7 @@ It supports:
 - batch template research
 - history view
 - artifacts index with filters
+- quick "latest artifact" lookup and export
 
 Optional API URL override for UI:
 
