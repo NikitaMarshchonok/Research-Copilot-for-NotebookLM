@@ -194,6 +194,8 @@ python -m app.cli snapshots list --view deep-research
 python -m app.cli snapshots get --id <SNAPSHOT_ID>
 python -m app.cli snapshots diff --from <SNAPSHOT_ID_A> --to <SNAPSHOT_ID_B>
 python -m app.cli snapshots diff-export --from <SNAPSHOT_ID_A> --to <SNAPSHOT_ID_B>
+python -m app.cli snapshots diff-latest --view deep-research
+python -m app.cli snapshots diff-latest-export --view deep-research
 ```
 
 Artifacts are written into `outputs/`.
@@ -241,6 +243,8 @@ Endpoints:
 - `GET /snapshots/{snapshot_id}`
 - `POST /snapshots/diff`
 - `POST /snapshots/diff/export`
+- `GET /snapshots/diff/latest?view_name=...`
+- `POST /snapshots/diff/latest/export?view_name=...`
 - `POST /export` (alias: `POST /exports`)
 
 Open docs: <http://127.0.0.1:8000/docs>

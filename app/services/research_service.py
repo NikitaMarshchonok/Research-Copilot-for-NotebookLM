@@ -442,6 +442,20 @@ class ResearchService:
         diff = self.diff_snapshots(from_snapshot_id, to_snapshot_id)
         return self.export_service.export_snapshot_diff(diff)
 
+    def diff_latest_snapshots(self, view_name: str) -> SnapshotDiffResponse:
+        snapshots = self.list_snapshots(view_name=view_name)
+        if len(snapshots) < 2:
+            raise NotFoundError(
+                f"At least 2 snapshots are required for view '{view_name}' to build latest diff."
+            )
+        newest = snapshots[0]
+        previous = snapshots[1]
+        return self.diff_snapshots(previous.id, newest.id)
+
+    def export_latest_snapshot_diff(self, view_name: str) -> dict[str, str]:
+        diff = self.diff_latest_snapshots(view_name=view_name)
+        return self.export_service.export_snapshot_diff(diff)
+
     def _get_latest_snapshot_for_view(self, view_name: str) -> SnapshotEntry | None:
         snapshots = self.list_snapshots(view_name=view_name)
         if not snapshots:

@@ -377,6 +377,20 @@ def snapshots_diff_export(
     typer.echo(json.dumps(paths, ensure_ascii=False, indent=2))
 
 
+@snapshots_app.command("diff-latest")
+def snapshots_diff_latest(view_name: str = typer.Option(..., "--view")) -> None:
+    container = _container()
+    diff = container.research_service.diff_latest_snapshots(view_name=view_name)
+    typer.echo(diff.model_dump_json(indent=2))
+
+
+@snapshots_app.command("diff-latest-export")
+def snapshots_diff_latest_export(view_name: str = typer.Option(..., "--view")) -> None:
+    container = _container()
+    paths = container.research_service.export_latest_snapshot_diff(view_name=view_name)
+    typer.echo(json.dumps(paths, ensure_ascii=False, indent=2))
+
+
 @history_app.command("list")
 def history_list(
     item_type: Optional[str] = typer.Option(

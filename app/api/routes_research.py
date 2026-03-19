@@ -184,6 +184,23 @@ def export_snapshot_diff(
     return SnapshotDiffExportResponse(markdown=paths["markdown"], json_path=paths["json"])
 
 
+@router.get("/snapshots/diff/latest", response_model=SnapshotDiffResponse)
+def diff_latest_snapshots(
+    view_name: str = Query(..., description="Saved view name"),
+    container: ServiceContainer = Depends(get_container),
+) -> SnapshotDiffResponse:
+    return container.research_service.diff_latest_snapshots(view_name=view_name)
+
+
+@router.post("/snapshots/diff/latest/export", response_model=SnapshotDiffExportResponse)
+def export_latest_snapshot_diff(
+    view_name: str = Query(..., description="Saved view name"),
+    container: ServiceContainer = Depends(get_container),
+) -> SnapshotDiffExportResponse:
+    paths = container.research_service.export_latest_snapshot_diff(view_name=view_name)
+    return SnapshotDiffExportResponse(markdown=paths["markdown"], json_path=paths["json"])
+
+
 @router.get("/history", response_model=list[HistorySummary])
 def list_history(
     item_type: str | None = Query(default=None, description="ask|research|batch_research"),

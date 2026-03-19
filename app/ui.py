@@ -354,6 +354,26 @@ if search_view_map:
                 st.json(snapshots)
             except requests.RequestException as exc:
                 st.error(f"Snapshot list failed: {exc}")
+    latest_snapshot_diff_col_1, latest_snapshot_diff_col_2 = st.columns(2)
+    with latest_snapshot_diff_col_1:
+        if st.button("Diff Latest 2 Snapshots (View)"):
+            try:
+                latest_diff = api_get("/snapshots/diff/latest", params={"view_name": snapshot_view_name})
+                st.json(latest_diff)
+            except requests.RequestException as exc:
+                st.error(f"Latest snapshot diff failed: {exc}")
+    with latest_snapshot_diff_col_2:
+        if st.button("Export Latest Snapshot Diff (View)"):
+            try:
+                response = requests.post(
+                    f"{API_BASE}/snapshots/diff/latest/export",
+                    params={"view_name": snapshot_view_name},
+                    timeout=60,
+                )
+                response.raise_for_status()
+                st.json(response.json())
+            except requests.RequestException as exc:
+                st.error(f"Latest snapshot diff export failed: {exc}")
 
 snapshot_id = st.text_input("Snapshot id (for details)", key="snapshot_id")
 if st.button("Get Snapshot by ID"):

@@ -90,3 +90,11 @@ def test_snapshot_creation_and_changelog(tmp_path: Path) -> None:
     exported = service.export_snapshot_diff(first.id, second.id)
     assert "markdown" in exported
     assert "json" in exported
+
+    latest_diff = service.diff_latest_snapshots(view_name="history-all")
+    assert latest_diff.from_snapshot_id == first.id
+    assert latest_diff.to_snapshot_id == second.id
+
+    latest_export = service.export_latest_snapshot_diff(view_name="history-all")
+    assert "markdown" in latest_export
+    assert "json" in latest_export
