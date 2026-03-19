@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any, Literal
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class HistoryItem(BaseModel):
@@ -20,3 +20,4 @@ class HistorySummary(BaseModel):
     type: Literal["ask", "research", "batch_research"]
     created_at: datetime | None = None
     title: str
+    tags: list[str] = Field(default_factory=list)

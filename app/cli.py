@@ -9,6 +9,7 @@ from app.core.exceptions import NotFoundError
 from app.bootstrap import build_container
 from app.core.logger import setup_logging
 from app.models.notebook import NotebookCreate
+from app.models.bundle_preset import BundlePresetCreateRequest
 from app.models.query import AskRequest
 from app.models.report import ResearchRequest
 from app.models.template import TemplateCreateRequest
@@ -18,11 +19,13 @@ app = typer.Typer(help="Research Copilot CLI")
 notebooks_app = typer.Typer(help="Notebook registry commands")
 history_app = typer.Typer(help="History commands")
 artifacts_app = typer.Typer(help="Artifacts index commands")
+bundles_app = typer.Typer(help="Bundle preset commands")
 templates_app = typer.Typer(help="Template commands")
 workspaces_app = typer.Typer(help="Workspace commands")
 app.add_typer(notebooks_app, name="notebooks")
 app.add_typer(history_app, name="history")
 app.add_typer(artifacts_app, name="artifacts")
+app.add_typer(bundles_app, name="bundles")
 app.add_typer(templates_app, name="templates")
 app.add_typer(workspaces_app, name="workspaces")
 
@@ -40,9 +43,10 @@ def init_project() -> None:
     container.notebooks_store.ensure()
     container.history_store.ensure()
     container.templates_store.ensure()
+    container.bundle_presets_store.ensure()
     typer.echo(
         f"Initialized workspace '{container.active_workspace}' "
-        "(notebooks, history, templates, outputs)."
+        "(notebooks, history, templates, bundle presets, outputs)."
     )
 
 
@@ -98,6 +102,7 @@ def ask(
     question: str = typer.Option(..., "--question"),
     notebook_id: Optional[str] = typer.Option(None, "--notebook-id"),
     artifact_type: str = typer.Option("summary", "--artifact-type"),
+    tags: List[str] = typer.Option([], "--tag"),
 ) -> None:
     container = _container()
     response = container.research_service.ask(
@@ -105,6 +110,7 @@ def ask(
             question=question,
             notebook_id=notebook_id,
             artifact_type=artifact_type,
+            tags=tags,
         )
     )
     typer.echo(response.answer)
@@ -118,6 +124,7 @@ def research(
     questions: List[str] = typer.Option(..., "--question"),
     notebook_id: Optional[str] = typer.Option(None, "--notebook-id"),
     artifact_type: str = typer.Option("study_guide", "--artifact-type"),
+    tags: List[str] = typer.Option([], "--tag"),
 ) -> None:
     container = _container()
     response = container.research_service.research(
@@ -126,6 +133,7 @@ def research(
             questions=questions,
             notebook_id=notebook_id,
             artifact_type=artifact_type,
+            tags=tags,
         )
     )
     typer.echo(f"Research report generated: {response.id}")
@@ -139,6 +147,7 @@ def research_template(
     template_name: str = typer.Option(..., "--template"),
     notebook_id: Optional[str] = typer.Option(None, "--notebook-id"),
     artifact_type: Optional[str] = typer.Option(None, "--artifact-type"),
+    tags: List[str] = typer.Option([], "--tag"),
 ) -> None:
     container = _container()
     response = container.research_service.research_from_template(
@@ -146,6 +155,7 @@ def research_template(
         template_name=template_name,
         notebook_id=notebook_id,
         artifact_type=artifact_type,
+        tags=tags,
     )
     typer.echo(f"Research report generated from template: {response.id}")
     typer.echo(f"Saved markdown: {response.output_markdown_path}")
@@ -158,6 +168,7 @@ def research_batch_template(
     template_name: str = typer.Option(..., "--template"),
     notebook_id: Optional[str] = typer.Option(None, "--notebook-id"),
     artifact_type: Optional[str] = typer.Option(None, "--artifact-type"),
+    tags: List[str] = typer.Option([], "--tag"),
     continue_on_error: bool = typer.Option(True, "--continue-on-error/--fail-fast"),
 ) -> None:
     container = _container()
@@ -166,6 +177,7 @@ def research_batch_template(
         template_name=template_name,
         notebook_id=notebook_id,
         artifact_type=artifact_type,
+        tags=tags,
         continue_on_error=continue_on_error,
     )
     typer.echo(f"Batch research generated: {response.id}")
@@ -190,11 +202,15 @@ def export_latest(
         None, "--type", help="Filter by: ask, research, batch_research"
     ),
     template_name: Optional[str] = typer.Option(None, "--template"),
+    tag: Optional[str] = typer.Option(None, "--tag"),
+    query: Optional[str] = typer.Option(None, "--query"),
 ) -> None:
     container = _container()
     paths = container.research_service.export_latest_artifact(
         item_type=item_type,
         template_name=template_name,
+        tag=tag,
+        query=query,
     )
     typer.echo(json.dumps(paths, ensure_ascii=False, indent=2))
 
@@ -212,15 +228,61 @@ def export_bundle(
     typer.echo(json.dumps(paths, ensure_ascii=False, indent=2))
 
 
-@history_app.command("list")
-def history_list() -> None:
+@bundles_app.command("list")
+def bundles_list() -> None:
     container = _container()
-    items = container.research_service.list_history()
+    presets = container.research_service.list_bundle_presets()
+    for preset in presets:
+        typer.echo(
+            f"{preset.name} | types={','.join(preset.item_types)} | {preset.description}"
+        )
+
+
+@bundles_app.command("add")
+def bundles_add(
+    name: str = typer.Option(..., "--name"),
+    item_types: List[str] = typer.Option(..., "--type"),
+    description: str = typer.Option("", "--description"),
+) -> None:
+    container = _container()
+    preset = container.research_service.add_bundle_preset(
+        BundlePresetCreateRequest(
+            name=name,
+            item_types=item_types,  # type: ignore[arg-type]
+            description=description,
+        )
+    )
+    typer.echo(f"Bundle preset added: {preset.name}")
+
+
+@bundles_app.command("delete")
+def bundles_delete(name: str = typer.Option(..., "--name")) -> None:
+    container = _container()
+    container.research_service.delete_bundle_preset(name)
+    typer.echo(f"Bundle preset deleted: {name}")
+
+
+@history_app.command("list")
+def history_list(
+    item_type: Optional[str] = typer.Option(
+        None, "--type", help="Filter by: ask, research, batch_research"
+    ),
+    tag: Optional[str] = typer.Option(None, "--tag"),
+    query: Optional[str] = typer.Option(None, "--query"),
+) -> None:
+    container = _container()
+    items = container.research_service.list_history(
+        item_type=item_type,
+        tag=tag,
+        query=query,
+    )
     if not items:
         typer.echo("History is empty.")
         return
     for item in items:
-        typer.echo(f"{item.id} | {item.type} | {item.title} | {item.created_at}")
+        typer.echo(
+            f"{item.id} | {item.type} | {item.title} | tags={','.join(item.tags)} | {item.created_at}"
+        )
 
 
 @history_app.command("get")
@@ -235,15 +297,24 @@ def artifacts_list(
     item_type: Optional[str] = typer.Option(
         None, "--type", help="Filter by: ask, research, batch_research"
     ),
+    template_name: Optional[str] = typer.Option(None, "--template"),
+    tag: Optional[str] = typer.Option(None, "--tag"),
+    query: Optional[str] = typer.Option(None, "--query"),
 ) -> None:
     container = _container()
-    items = container.research_service.list_artifacts(item_type=item_type)
+    items = container.research_service.list_artifacts(
+        item_type=item_type,
+        template_name=template_name,
+        tag=tag,
+        query=query,
+    )
     if not items:
         typer.echo("No artifacts found.")
         return
     for item in items:
         typer.echo(
-            f"{item.id} | {item.type} | {item.title} | md={item.markdown_path} | json={item.json_path}"
+            f"{item.id} | {item.type} | {item.title} | tags={','.join(item.tags)} | "
+            f"md={item.markdown_path} | json={item.json_path}"
         )
 
 
@@ -253,15 +324,19 @@ def artifacts_latest(
         None, "--type", help="Filter by: ask, research, batch_research"
     ),
     template_name: Optional[str] = typer.Option(None, "--template"),
+    tag: Optional[str] = typer.Option(None, "--tag"),
+    query: Optional[str] = typer.Option(None, "--query"),
 ) -> None:
     container = _container()
     item = container.research_service.get_latest_artifact(
         item_type=item_type,
         template_name=template_name,
+        tag=tag,
+        query=query,
     )
     typer.echo(
         f"{item.id} | {item.type} | {item.title} | template={item.template_name} | "
-        f"md={item.markdown_path} | json={item.json_path}"
+        f"tags={','.join(item.tags)} | md={item.markdown_path} | json={item.json_path}"
     )
 
 

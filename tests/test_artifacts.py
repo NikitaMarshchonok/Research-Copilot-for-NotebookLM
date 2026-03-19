@@ -4,6 +4,7 @@ from fastapi.testclient import TestClient
 
 from app.main import app
 from app.models.notebook import NotebookRegistryState
+from app.services.bundle_preset_service import BundlePresetService
 from app.services.export_service import ExportService
 from app.services.notebook_registry import NotebookRegistryService
 from app.services.notebooklm_client import StubNotebookLMClient
@@ -41,11 +42,14 @@ def test_artifacts_filter_by_type(tmp_path: Path) -> None:
     )
     history_store = JsonStore(tmp_path / "history.json", default_value={"items": []})
     templates_store = JsonStore(tmp_path / "templates.json", default_value={"items": []})
+    bundle_presets_store = JsonStore(tmp_path / "bundle_presets.json", default_value={"items": []})
     registry = NotebookRegistryService(notebooks_store)
     templates = TemplateService(templates_store)
+    bundle_presets = BundlePresetService(bundle_presets_store)
     service = ResearchService(
         registry=registry,
         template_service=templates,
+        bundle_preset_service=bundle_presets,
         notebooklm_client=StubNotebookLMClient(),
         export_service=ExportService(FileStore(tmp_path / "outputs")),
         history_store=history_store,
@@ -59,6 +63,7 @@ def test_artifacts_filter_by_type(tmp_path: Path) -> None:
                     "payload": {
                         "id": "a1",
                         "question": "q1",
+                        "tags": ["quick", "faq"],
                         "created_at": "2026-01-01T00:00:00Z",
                         "output_markdown_path": "outputs/a1.md",
                         "output_json_path": "outputs/a1.json",
@@ -69,6 +74,7 @@ def test_artifacts_filter_by_type(tmp_path: Path) -> None:
                     "payload": {
                         "id": "r1",
                         "topic": "topic1",
+                        "tags": ["deep", "study"],
                         "created_at": "2026-01-02T00:00:00Z",
                         "output_markdown_path": "outputs/r1.md",
                         "output_json_path": "outputs/r1.json",
@@ -87,6 +93,14 @@ def test_artifacts_filter_by_type(tmp_path: Path) -> None:
 
     by_template = service.list_artifacts(template_name="summary")
     assert by_template == []
+
+    by_tag = service.list_artifacts(tag="quick")
+    assert len(by_tag) == 1
+    assert by_tag[0].id == "a1"
+
+    by_query = service.list_artifacts(query="topic1")
+    assert len(by_query) == 1
+    assert by_query[0].id == "r1"
 
     bundle = service.export_artifact_bundle(bundle_name="article-pack")
     assert "markdown" in bundle

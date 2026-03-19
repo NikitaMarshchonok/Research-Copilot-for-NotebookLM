@@ -16,6 +16,8 @@ class ExportResponse(BaseModel):
 class LatestExportRequest(BaseModel):
     item_type: str | None = None
     template_name: str | None = None
+    tag: str | None = None
+    query: str | None = None
 
 
 class BundleExportRequest(BaseModel):

@@ -15,6 +15,7 @@ class AskRequest(BaseModel):
     question: str = Field(min_length=3)
     notebook_id: Optional[str] = None
     artifact_type: str = "summary"
+    tags: List[str] = Field(default_factory=list)
 
 
 class AskResponse(BaseModel):
@@ -25,6 +26,7 @@ class AskResponse(BaseModel):
     answer: str
     sources: List[str] = Field(default_factory=list)
     artifact_type: str = "summary"
+    tags: List[str] = Field(default_factory=list)
     created_at: datetime = Field(default_factory=utcnow)
     output_markdown_path: Optional[str] = None
     output_json_path: Optional[str] = None

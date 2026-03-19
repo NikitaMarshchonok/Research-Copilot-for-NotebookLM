@@ -33,6 +33,7 @@ class RunTemplateRequest(BaseModel):
     template_name: str
     notebook_id: Optional[str] = None
     artifact_type: Optional[str] = None
+    tags: list[str] = Field(default_factory=list)
 
 
 class RunBatchTemplateRequest(BaseModel):
@@ -40,4 +41,5 @@ class RunBatchTemplateRequest(BaseModel):
     template_name: str
     notebook_id: Optional[str] = None
     artifact_type: Optional[str] = None
+    tags: list[str] = Field(default_factory=list)
     continue_on_error: bool = True

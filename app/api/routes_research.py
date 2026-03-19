@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, Query
 
 from app.bootstrap import ServiceContainer, build_container
 from app.models.artifact import ArtifactItem
+from app.models.bundle_preset import BundlePresetCreateRequest, BundlePresetEntry
 from app.models.export import (
     BundleExportRequest,
     BundleExportResponse,
@@ -63,6 +64,8 @@ def export_latest(
     paths = container.research_service.export_latest_artifact(
         item_type=payload.item_type,
         template_name=payload.template_name,
+        tag=payload.tag,
+        query=payload.query,
     )
     return ExportResponse(markdown=paths["markdown"], json_path=paths["json"])
 
@@ -82,19 +85,49 @@ def export_bundle(
     )
 
 
+@router.get("/bundle-presets", response_model=list[BundlePresetEntry])
+def list_bundle_presets(container: ServiceContainer = Depends(get_container)) -> list[BundlePresetEntry]:
+    return container.research_service.list_bundle_presets()
+
+
+@router.post("/bundle-presets", response_model=BundlePresetEntry)
+def add_bundle_preset(
+    payload: BundlePresetCreateRequest, container: ServiceContainer = Depends(get_container)
+) -> BundlePresetEntry:
+    return container.research_service.add_bundle_preset(payload)
+
+
+@router.delete("/bundle-presets/{preset_name}")
+def delete_bundle_preset(
+    preset_name: str, container: ServiceContainer = Depends(get_container)
+) -> dict[str, str]:
+    container.research_service.delete_bundle_preset(preset_name)
+    return {"status": "deleted", "preset": preset_name}
+
+
 @router.get("/history", response_model=list[HistorySummary])
-def list_history(container: ServiceContainer = Depends(get_container)) -> list[HistorySummary]:
-    return container.research_service.list_history()
+def list_history(
+    item_type: str | None = Query(default=None, description="ask|research|batch_research"),
+    tag: str | None = Query(default=None, description="Filter by tag"),
+    query: str | None = Query(default=None, description="Search in title"),
+    container: ServiceContainer = Depends(get_container),
+) -> list[HistorySummary]:
+    return container.research_service.list_history(item_type=item_type, tag=tag, query=query)
 
 
 @router.get("/artifacts", response_model=list[ArtifactItem])
 def list_artifacts(
     item_type: str | None = Query(default=None, description="ask|research|batch_research"),
     template_name: str | None = Query(default=None, description="Filter by template name"),
+    tag: str | None = Query(default=None, description="Filter by tag"),
+    query: str | None = Query(default=None, description="Search in title"),
     container: ServiceContainer = Depends(get_container),
 ) -> list[ArtifactItem]:
     return container.research_service.list_artifacts(
-        item_type=item_type, template_name=template_name
+        item_type=item_type,
+        template_name=template_name,
+        tag=tag,
+        query=query,
     )
 
 
@@ -102,10 +135,15 @@ def list_artifacts(
 def get_latest_artifact(
     item_type: str | None = Query(default=None, description="ask|research|batch_research"),
     template_name: str | None = Query(default=None, description="Filter by template name"),
+    tag: str | None = Query(default=None, description="Filter by tag"),
+    query: str | None = Query(default=None, description="Search in title"),
     container: ServiceContainer = Depends(get_container),
 ) -> ArtifactItem:
     return container.research_service.get_latest_artifact(
-        item_type=item_type, template_name=template_name
+        item_type=item_type,
+        template_name=template_name,
+        tag=tag,
+        query=query,
     )
 
 
@@ -137,6 +175,7 @@ def research_from_template(
         template_name=payload.template_name,
         notebook_id=payload.notebook_id,
         artifact_type=payload.artifact_type,
+        tags=payload.tags,
     )
 
 
@@ -149,5 +188,6 @@ def research_batch_from_template(
         template_name=payload.template_name,
         notebook_id=payload.notebook_id,
         artifact_type=payload.artifact_type,
+        tags=payload.tags,
         continue_on_error=payload.continue_on_error,
     )

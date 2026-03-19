@@ -5,6 +5,7 @@ from typing import List
 
 from app.core.exceptions import NotFoundError
 from app.models.artifact import ArtifactItem
+from app.models.bundle_preset import BundlePresetCreateRequest, BundlePresetEntry
 from app.models.history import HistoryItem, HistorySummary
 from app.models.query import AskRequest, AskResponse
 from app.models.report import (
@@ -14,6 +15,7 @@ from app.models.report import (
     ResearchResponse,
 )
 from app.services.export_service import ExportService
+from app.services.bundle_preset_service import BundlePresetService
 from app.services.notebook_registry import NotebookRegistryService
 from app.services.notebooklm_client import NotebookLMClient
 from app.services.prompt_templates import build_question
@@ -22,24 +24,20 @@ from app.storage.json_store import JsonStore
 
 logger = logging.getLogger(__name__)
 
-BUNDLE_PRESETS: dict[str, list[str]] = {
-    "article-pack": ["research", "ask", "batch_research"],
-    "tech-brief-pack": ["research", "batch_research"],
-    "study-pack": ["research", "ask"],
-}
-
 
 class ResearchService:
     def __init__(
         self,
         registry: NotebookRegistryService,
         template_service: TemplateService,
+        bundle_preset_service: BundlePresetService,
         notebooklm_client: NotebookLMClient,
         export_service: ExportService,
         history_store: JsonStore,
     ) -> None:
         self.registry = registry
         self.template_service = template_service
+        self.bundle_preset_service = bundle_preset_service
         self.notebooklm_client = notebooklm_client
         self.export_service = export_service
         self.history_store = history_store
@@ -57,6 +55,7 @@ class ResearchService:
             answer=answer.answer,
             sources=answer.sources,
             artifact_type=request.artifact_type,
+            tags=request.tags,
         )
         if save_outputs:
             response = self.export_service.export_answer(response)
@@ -72,6 +71,7 @@ class ResearchService:
                     question=question,
                     notebook_id=request.notebook_id,
                     artifact_type=request.artifact_type,
+                    tags=request.tags,
                 ),
                 save_outputs=False,
             )
@@ -82,6 +82,7 @@ class ResearchService:
             topic=request.topic,
             notebook_id=notebook.id,
             artifact_type=request.artifact_type,
+            tags=request.tags,
             items=items,
         )
         if save_outputs:
@@ -123,6 +124,7 @@ class ResearchService:
         template_name: str,
         notebook_id: str | None = None,
         artifact_type: str | None = None,
+        tags: list[str] | None = None,
     ) -> ResearchResponse:
         questions, template_artifact = self.template_service.render_questions(template_name, topic)
         return self.research(
@@ -131,6 +133,7 @@ class ResearchService:
                 questions=questions,
                 notebook_id=notebook_id,
                 artifact_type=artifact_type or template_artifact,
+                tags=tags or [],
             )
         )
 
@@ -140,6 +143,7 @@ class ResearchService:
         template_name: str,
         notebook_id: str | None = None,
         artifact_type: str | None = None,
+        tags: list[str] | None = None,
         continue_on_error: bool = True,
     ) -> BatchResearchResponse:
         items: list[ResearchResponse] = []
@@ -152,6 +156,7 @@ class ResearchService:
                     template_name=template_name,
                     notebook_id=notebook_id,
                     artifact_type=artifact_type,
+                    tags=tags,
                 )
                 items.append(report)
             except Exception as exc:  # noqa: BLE001
@@ -163,6 +168,7 @@ class ResearchService:
             template_name=template_name,
             notebook_id=notebook_id,
             artifact_type=artifact_type,
+            tags=tags or [],
             items=items,
             failures=failures,
         )
@@ -170,30 +176,47 @@ class ResearchService:
         self._append_history({"type": "batch_research", "payload": response.model_dump(mode="json")})
         return response
 
-    def list_history(self) -> list[HistorySummary]:
+    def list_history(
+        self,
+        item_type: str | None = None,
+        tag: str | None = None,
+        query: str | None = None,
+    ) -> list[HistorySummary]:
         history = self.history_store.read()
         summaries: list[HistorySummary] = []
         for entry in history.get("items", []):
             payload = entry.get("payload", {})
-            item_type = entry.get("type", "ask")
+            entry_type = str(entry.get("type", "ask"))
+            tags = [str(value) for value in payload.get("tags", [])]
             title = (
                 payload.get("question")
                 or payload.get("topic")
                 or payload.get("template_name")
                 or "Untitled history item"
             )
+            if item_type and entry_type != item_type:
+                continue
+            if tag and tag.strip().lower() not in {value.lower() for value in tags}:
+                continue
+            if query and query.strip().lower() not in str(title).lower():
+                continue
             summaries.append(
                 HistorySummary(
                     id=str(payload.get("id", "")),
-                    type=item_type,
+                    type=entry_type,  # type: ignore[arg-type]
                     created_at=payload.get("created_at"),
                     title=title,
+                    tags=tags,
                 )
             )
         return summaries
 
     def list_artifacts(
-        self, item_type: str | None = None, template_name: str | None = None
+        self,
+        item_type: str | None = None,
+        template_name: str | None = None,
+        tag: str | None = None,
+        query: str | None = None,
     ) -> list[ArtifactItem]:
         history = self.history_store.read()
         artifacts: list[ArtifactItem] = []
@@ -203,6 +226,7 @@ class ResearchService:
                 continue
             payload = entry.get("payload", {})
             payload_template = payload.get("template_name")
+            payload_tags = [str(value) for value in payload.get("tags", [])]
             if template_name and str(payload_template or "").strip().lower() != template_name.strip().lower():
                 continue
             title = (
@@ -211,12 +235,17 @@ class ResearchService:
                 or payload.get("template_name")
                 or "Untitled artifact"
             )
+            if tag and tag.strip().lower() not in {value.lower() for value in payload_tags}:
+                continue
+            if query and query.strip().lower() not in str(title).lower():
+                continue
             artifacts.append(
                 ArtifactItem(
                     id=str(payload.get("id", "")),
                     type=entry_type,  # type: ignore[arg-type]
                     title=str(title),
                     template_name=str(payload_template) if payload_template else None,
+                    tags=payload_tags,
                     created_at=payload.get("created_at"),
                     markdown_path=payload.get("output_markdown_path"),
                     json_path=payload.get("output_json_path"),
@@ -229,23 +258,41 @@ class ResearchService:
         return artifacts
 
     def get_latest_artifact(
-        self, item_type: str | None = None, template_name: str | None = None
+        self,
+        item_type: str | None = None,
+        template_name: str | None = None,
+        tag: str | None = None,
+        query: str | None = None,
     ) -> ArtifactItem:
-        artifacts = self.list_artifacts(item_type=item_type, template_name=template_name)
+        artifacts = self.list_artifacts(
+            item_type=item_type,
+            template_name=template_name,
+            tag=tag,
+            query=query,
+        )
         if not artifacts:
             raise NotFoundError("No artifacts found for the provided filter.")
         return artifacts[0]
 
     def export_latest_artifact(
-        self, item_type: str | None = None, template_name: str | None = None
+        self,
+        item_type: str | None = None,
+        template_name: str | None = None,
+        tag: str | None = None,
+        query: str | None = None,
     ) -> dict[str, str]:
-        latest = self.get_latest_artifact(item_type=item_type, template_name=template_name)
+        latest = self.get_latest_artifact(
+            item_type=item_type,
+            template_name=template_name,
+            tag=tag,
+            query=query,
+        )
         return self.export_from_history(latest.id)
 
     def export_artifact_bundle(
         self, bundle_name: str = "article-pack", template_name: str | None = None
     ) -> dict[str, str | int]:
-        filters = BUNDLE_PRESETS.get(bundle_name, BUNDLE_PRESETS["article-pack"])
+        filters = self.bundle_preset_service.get_item_types(bundle_name)
         selected: list[ArtifactItem] = []
         seen_ids: set[str] = set()
         for item_type in filters:
@@ -267,6 +314,15 @@ class ResearchService:
             "json": paths["json"],
             "included_count": len(selected),
         }
+
+    def list_bundle_presets(self) -> list[BundlePresetEntry]:
+        return self.bundle_preset_service.list_presets()
+
+    def add_bundle_preset(self, payload: BundlePresetCreateRequest) -> BundlePresetEntry:
+        return self.bundle_preset_service.add_preset(payload)
+
+    def delete_bundle_preset(self, name: str) -> None:
+        self.bundle_preset_service.delete_preset(name)
 
     def get_history_item(self, item_id: str) -> HistoryItem:
         history = self.history_store.read()

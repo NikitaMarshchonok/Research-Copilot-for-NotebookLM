@@ -10,8 +10,8 @@ ARTIFACT_TYPES = ["summary", "faq", "comparison", "study_guide", "implementation
 st.set_page_config(page_title="Research Copilot", layout="wide")
 st.title("Research Copilot + NotebookLM")
 
-def api_get(path: str) -> dict | list:
-    response = requests.get(f"{API_BASE}{path}", timeout=30)
+def api_get(path: str, params: dict | None = None) -> dict | list:
+    response = requests.get(f"{API_BASE}{path}", params=params, timeout=30)
     response.raise_for_status()
     return response.json()
 
@@ -101,9 +101,17 @@ with right:
         "Artifact type",
         ["summary", "faq", "comparison", "study_guide", "implementation_notes"],
     )
+    ask_tags_raw = st.text_input("Ask tags (comma separated)")
     if st.button("Run Ask"):
         try:
-            result = api_post("/ask", {"question": question, "artifact_type": artifact_type})
+            result = api_post(
+                "/ask",
+                {
+                    "question": question,
+                    "artifact_type": artifact_type,
+                    "tags": [tag.strip() for tag in ask_tags_raw.split(",") if tag.strip()],
+                },
+            )
             st.json(result)
         except requests.RequestException as exc:
             st.error(f"Ask failed: {exc}")
@@ -115,6 +123,7 @@ research_artifact = st.selectbox(
     "Research artifact type",
     ["study_guide", "summary", "faq", "comparison", "implementation_notes"],
 )
+research_tags_raw = st.text_input("Research tags (comma separated)")
 if st.button("Run Research"):
     questions = [line.strip() for line in questions_raw.splitlines() if line.strip()]
     if not questions:
@@ -123,7 +132,12 @@ if st.button("Run Research"):
         try:
             report = api_post(
                 "/research",
-                {"topic": topic, "questions": questions, "artifact_type": research_artifact},
+                {
+                    "topic": topic,
+                    "questions": questions,
+                    "artifact_type": research_artifact,
+                    "tags": [tag.strip() for tag in research_tags_raw.split(",") if tag.strip()],
+                },
             )
             st.json(report)
         except requests.RequestException as exc:
@@ -190,6 +204,7 @@ with template_right:
         ARTIFACT_TYPES,
         key="template_override_artifact",
     )
+    template_run_tags_raw = st.text_input("Template run tags (comma separated)")
     if st.button("Run Template Research", disabled=not bool(template_names)):
         try:
             report = api_post(
@@ -198,6 +213,7 @@ with template_right:
                     "topic": single_topic,
                     "template_name": selected_template,
                     "artifact_type": template_override_artifact,
+                    "tags": [tag.strip() for tag in template_run_tags_raw.split(",") if tag.strip()],
                 },
             )
             st.json(report)
@@ -207,6 +223,7 @@ with template_right:
 st.subheader("Batch Template Research")
 batch_topics_raw = st.text_area("Batch topics (one per line)", height=120)
 batch_continue = st.checkbox("Continue on error", value=True)
+batch_tags_raw = st.text_input("Batch tags (comma separated)")
 if st.button("Run Batch Template Research", disabled=not bool(template_map)):
     topics = [line.strip() for line in batch_topics_raw.splitlines() if line.strip()]
     if not topics:
@@ -218,6 +235,7 @@ if st.button("Run Batch Template Research", disabled=not bool(template_map)):
                 {
                     "topics": topics,
                     "template_name": selected_template,
+                    "tags": [tag.strip() for tag in batch_tags_raw.split(",") if tag.strip()],
                     "continue_on_error": batch_continue,
                 },
             )
@@ -226,9 +244,27 @@ if st.button("Run Batch Template Research", disabled=not bool(template_map)):
             st.error(f"Batch template research failed: {exc}")
 
 st.subheader("History")
+history_filter_col_1, history_filter_col_2, history_filter_col_3 = st.columns(3)
+with history_filter_col_1:
+    history_type_filter = st.selectbox(
+        "History type",
+        ["all", "ask", "research", "batch_research"],
+        key="history_type_filter",
+    )
+with history_filter_col_2:
+    history_tag_filter = st.text_input("History tag filter", key="history_tag_filter")
+with history_filter_col_3:
+    history_query_filter = st.text_input("History query filter", key="history_query_filter")
 if st.button("Refresh History"):
     try:
-        history = api_get("/history")
+        params: dict[str, str] = {}
+        if history_type_filter != "all":
+            params["item_type"] = history_type_filter
+        if history_tag_filter.strip():
+            params["tag"] = history_tag_filter.strip()
+        if history_query_filter.strip():
+            params["query"] = history_query_filter.strip()
+        history = api_get("/history", params=params or None)
         st.json(history)
     except requests.RequestException as exc:
         st.error(f"History load failed: {exc}")
@@ -243,12 +279,20 @@ latest_template_filter = st.text_input(
     "Latest artifact template filter (optional, for template/batch)",
     key="latest_template_filter",
 )
+artifact_tag_filter = st.text_input("Artifact tag filter", key="artifact_tag_filter")
+artifact_query_filter = st.text_input("Artifact query filter", key="artifact_query_filter")
 if st.button("Refresh Artifacts"):
     try:
-        path = "/artifacts"
+        params: dict[str, str] = {}
         if artifact_filter != "all":
-            path = f"/artifacts?item_type={artifact_filter}"
-        artifacts = api_get(path)
+            params["item_type"] = artifact_filter
+        if latest_template_filter.strip():
+            params["template_name"] = latest_template_filter.strip()
+        if artifact_tag_filter.strip():
+            params["tag"] = artifact_tag_filter.strip()
+        if artifact_query_filter.strip():
+            params["query"] = artifact_query_filter.strip()
+        artifacts = api_get("/artifacts", params=params or None)
         st.json(artifacts)
     except requests.RequestException as exc:
         st.error(f"Artifacts load failed: {exc}")
@@ -257,15 +301,16 @@ artifact_col_1, artifact_col_2 = st.columns(2)
 with artifact_col_1:
     if st.button("Get Latest Artifact"):
         try:
-            path = "/artifacts/latest"
-            params = []
+            params: dict[str, str] = {}
             if artifact_filter != "all":
-                params.append(f"item_type={artifact_filter}")
+                params["item_type"] = artifact_filter
             if latest_template_filter.strip():
-                params.append(f"template_name={latest_template_filter.strip()}")
-            if params:
-                path = f"{path}?{'&'.join(params)}"
-            latest = api_get(path)
+                params["template_name"] = latest_template_filter.strip()
+            if artifact_tag_filter.strip():
+                params["tag"] = artifact_tag_filter.strip()
+            if artifact_query_filter.strip():
+                params["query"] = artifact_query_filter.strip()
+            latest = api_get("/artifacts/latest", params=params or None)
             st.json(latest)
         except requests.RequestException as exc:
             st.error(f"Latest artifact load failed: {exc}")
@@ -278,17 +323,62 @@ with artifact_col_2:
                 payload["item_type"] = artifact_filter
             if latest_template_filter.strip():
                 payload["template_name"] = latest_template_filter.strip()
+            if artifact_tag_filter.strip():
+                payload["tag"] = artifact_tag_filter.strip()
+            if artifact_query_filter.strip():
+                payload["query"] = artifact_query_filter.strip()
             exported = api_post("/exports/latest", payload)
             st.json(exported)
         except requests.RequestException as exc:
             st.error(f"Latest artifact export failed: {exc}")
 
 st.subheader("Artifact Bundles")
-bundle_name = st.selectbox(
-    "Bundle preset",
-    ["article-pack", "tech-brief-pack", "study-pack"],
-    key="bundle_name",
-)
+bundle_preset_map: dict[str, dict] = {}
+try:
+    bundle_presets = api_get("/bundle-presets")
+    bundle_preset_map = {item["name"]: item for item in bundle_presets}
+except requests.RequestException as exc:
+    st.warning(f"Could not load bundle presets: {exc}")
+
+bundle_names = sorted(bundle_preset_map.keys()) or ["article-pack", "tech-brief-pack", "study-pack"]
+bundle_name = st.selectbox("Bundle preset", bundle_names, key="bundle_name")
+if bundle_name in bundle_preset_map:
+    st.caption(
+        f"Types: {', '.join(bundle_preset_map[bundle_name].get('item_types', []))} | "
+        f"{bundle_preset_map[bundle_name].get('description', '')}"
+    )
+
+with st.form("add_bundle_preset"):
+    st.caption("Create custom bundle preset")
+    new_bundle_name = st.text_input("Preset name")
+    new_bundle_description = st.text_input("Preset description")
+    new_bundle_types = st.multiselect(
+        "Artifact types in preset",
+        ["ask", "research", "batch_research"],
+        default=["research", "ask"],
+    )
+    add_bundle_preset = st.form_submit_button("Add Bundle Preset")
+    if add_bundle_preset:
+        try:
+            created = api_post(
+                "/bundle-presets",
+                {
+                    "name": new_bundle_name,
+                    "description": new_bundle_description,
+                    "item_types": new_bundle_types,
+                },
+            )
+            st.success(f"Bundle preset added: {created['name']}")
+        except requests.RequestException as exc:
+            st.error(f"Bundle preset creation failed: {exc}")
+
+if st.button("Delete Selected Bundle Preset"):
+    try:
+        requests.delete(f"{API_BASE}/bundle-presets/{bundle_name}", timeout=30).raise_for_status()
+        st.success(f"Bundle preset deleted: {bundle_name}")
+    except requests.RequestException as exc:
+        st.error(f"Bundle preset delete failed: {exc}")
+
 bundle_template = st.text_input("Bundle template filter (optional)", key="bundle_template")
 if st.button("Export Bundle"):
     try:

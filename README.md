@@ -37,6 +37,7 @@ research-copilot/
 │   │   └── logger.py
 │   ├── models/
 │   │   ├── artifact.py
+│   │   ├── bundle_preset.py
 │   │   ├── export.py
 │   │   ├── history.py
 │   │   ├── notebook.py
@@ -45,6 +46,7 @@ research-copilot/
 │   │   ├── template.py
 │   │   └── workspace.py
 │   ├── services/
+│   │   ├── bundle_preset_service.py
 │   │   ├── export_service.py
 │   │   ├── notebook_registry.py
 │   │   ├── notebooklm_client.py
@@ -61,6 +63,7 @@ research-copilot/
 │   └── ui.py
 ├── data/
 │   ├── history.json
+│   ├── bundle_presets.json
 │   ├── notebooks.json
 │   ├── templates.json
 │   └── workspaces.json
@@ -70,6 +73,7 @@ research-copilot/
 │   └── notebooklm_bridge.py
 ├── tests/
 │   ├── test_artifacts.py
+│   ├── test_bundle_presets.py
 │   ├── test_bridge_client.py
 │   ├── test_batch_template_endpoint.py
 │   ├── test_exports.py
@@ -129,6 +133,7 @@ Ask one question:
 
 ```bash
 python -m app.cli ask --question "What are main trade-offs?" --artifact-type summary
+python -m app.cli ask --question "What are main trade-offs?" --artifact-type summary --tag draft --tag intro
 ```
 
 Run research mode:
@@ -160,12 +165,17 @@ Export by history id:
 ```bash
 python -m app.cli export --history-id <ASK_OR_RESEARCH_ID>
 python -m app.cli history list
+python -m app.cli history list --type research --tag deep --query "MCP"
 python -m app.cli history get <ASK_OR_RESEARCH_ID>
 python -m app.cli artifacts list
-python -m app.cli artifacts list --type research
-python -m app.cli artifacts latest --type batch_research --template summary
-python -m app.cli export-latest --type research
+python -m app.cli artifacts list --type research --tag deep --query "topic"
+python -m app.cli artifacts latest --type batch_research --template summary --tag draft
+python -m app.cli export-latest --type research --tag deep
 python -m app.cli export-bundle --name article-pack
+
+python -m app.cli bundles list
+python -m app.cli bundles add --name "my-pack" --type research --type ask --description "for article draft"
+python -m app.cli bundles delete --name "my-pack"
 ```
 
 Artifacts are written into `outputs/`.
@@ -195,12 +205,15 @@ Endpoints:
 - `POST /templates`
 - `POST /research/template`
 - `POST /research/batch-template`
-- `GET /history`
+- `GET /history` (optional query: `item_type`, `tag`, `query`)
 - `GET /history/{history_id}`
-- `GET /artifacts` (optional query: `item_type=ask|research|batch_research`, `template_name=...`)
+- `GET /artifacts` (optional query: `item_type`, `template_name`, `tag`, `query`)
 - `GET /artifacts/latest` (same optional filters)
-- `POST /exports/latest`
+- `POST /exports/latest` (body supports `item_type`, `template_name`, `tag`, `query`)
 - `POST /exports/bundle` (bundle presets: `article-pack`, `tech-brief-pack`, `study-pack`)
+- `GET /bundle-presets`
+- `POST /bundle-presets`
+- `DELETE /bundle-presets/{preset_name}`
 - `POST /export` (alias: `POST /exports`)
 
 Open docs: <http://127.0.0.1:8000/docs>
@@ -223,6 +236,8 @@ It supports:
 - artifacts index with filters
 - quick "latest artifact" lookup and export
 - artifact bundle export for article/brief packs
+- custom bundle presets per workspace
+- history/artifact filtering by tags and search query
 
 Optional API URL override for UI:
 

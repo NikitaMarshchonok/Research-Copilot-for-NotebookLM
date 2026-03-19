@@ -6,6 +6,7 @@ from app.core.config import Settings, get_settings
 from app.core.exceptions import IntegrationError
 from app.models.notebook import NotebookRegistryState
 from app.services.export_service import ExportService
+from app.services.bundle_preset_service import BundlePresetService
 from app.services.notebook_registry import NotebookRegistryService
 from app.services.notebooklm_client import BridgeNotebookLMClient, NotebookLMClient, StubNotebookLMClient
 from app.services.research_service import ResearchService
@@ -23,8 +24,10 @@ class ServiceContainer:
     notebooks_store: JsonStore
     history_store: JsonStore
     templates_store: JsonStore
+    bundle_presets_store: JsonStore
     notebook_registry: NotebookRegistryService
     template_service: TemplateService
+    bundle_preset_service: BundlePresetService
     research_service: ResearchService
 
 
@@ -52,13 +55,19 @@ def build_container() -> ServiceContainer:
     )
     history_store = JsonStore(workspace_context.data_path / "history.json", default_value={"items": []})
     templates_store = JsonStore(workspace_context.data_path / "templates.json", default_value={"items": []})
+    bundle_presets_store = JsonStore(
+        workspace_context.data_path / "bundle_presets.json",
+        default_value={"items": []},
+    )
 
     notebook_registry = NotebookRegistryService(notebooks_store)
     template_service = TemplateService(templates_store)
+    bundle_preset_service = BundlePresetService(bundle_presets_store)
     export_service = ExportService(FileStore(workspace_context.outputs_path))
     research_service = ResearchService(
         registry=notebook_registry,
         template_service=template_service,
+        bundle_preset_service=bundle_preset_service,
         notebooklm_client=_build_notebooklm_client(settings),
         export_service=export_service,
         history_store=history_store,
@@ -71,7 +80,9 @@ def build_container() -> ServiceContainer:
         notebooks_store=notebooks_store,
         history_store=history_store,
         templates_store=templates_store,
+        bundle_presets_store=bundle_presets_store,
         notebook_registry=notebook_registry,
         template_service=template_service,
+        bundle_preset_service=bundle_preset_service,
         research_service=research_service,
     )
