@@ -16,6 +16,7 @@ from app.models.history import HistoryItem, HistorySummary
 from app.models.query import AskRequest, AskResponse
 from app.models.report import BatchResearchResponse, ResearchRequest, ResearchResponse
 from app.models.search_view import SearchViewCreateRequest, SearchViewEntry, SearchViewRunResponse
+from app.models.snapshot import SnapshotCreateRequest, SnapshotEntry, SnapshotListItem
 from app.models.template import (
     RunBatchTemplateRequest,
     RunTemplateRequest,
@@ -131,6 +132,28 @@ def run_search_view(
     view_name: str, container: ServiceContainer = Depends(get_container)
 ) -> SearchViewRunResponse:
     return container.research_service.run_search_view(view_name)
+
+
+@router.post("/snapshots", response_model=SnapshotEntry)
+def create_snapshot(
+    payload: SnapshotCreateRequest, container: ServiceContainer = Depends(get_container)
+) -> SnapshotEntry:
+    return container.research_service.create_snapshot(payload)
+
+
+@router.get("/snapshots", response_model=list[SnapshotListItem])
+def list_snapshots(
+    view_name: str | None = Query(default=None, description="Filter by saved view name"),
+    container: ServiceContainer = Depends(get_container),
+) -> list[SnapshotListItem]:
+    return container.research_service.list_snapshots(view_name=view_name)
+
+
+@router.get("/snapshots/{snapshot_id}", response_model=SnapshotEntry)
+def get_snapshot(
+    snapshot_id: str, container: ServiceContainer = Depends(get_container)
+) -> SnapshotEntry:
+    return container.research_service.get_snapshot(snapshot_id)
 
 
 @router.get("/history", response_model=list[HistorySummary])

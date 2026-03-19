@@ -45,6 +45,7 @@ def test_artifacts_filter_by_type(tmp_path: Path) -> None:
     templates_store = JsonStore(tmp_path / "templates.json", default_value={"items": []})
     bundle_presets_store = JsonStore(tmp_path / "bundle_presets.json", default_value={"items": []})
     search_views_store = JsonStore(tmp_path / "search_views.json", default_value={"items": []})
+    snapshots_store = JsonStore(tmp_path / "snapshots.json", default_value={"items": []})
     registry = NotebookRegistryService(notebooks_store)
     templates = TemplateService(templates_store)
     bundle_presets = BundlePresetService(bundle_presets_store)
@@ -57,6 +58,7 @@ def test_artifacts_filter_by_type(tmp_path: Path) -> None:
         notebooklm_client=StubNotebookLMClient(),
         export_service=ExportService(FileStore(tmp_path / "outputs")),
         history_store=history_store,
+        snapshots_store=snapshots_store,
     )
 
     history_store.write(

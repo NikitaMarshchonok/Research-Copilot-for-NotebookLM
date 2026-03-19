@@ -1,6 +1,11 @@
 from pathlib import Path
 
+from fastapi.testclient import TestClient
+
+from app.main import app
 from app.models.notebook import NotebookRegistryState
+from app.models.search_view import SearchViewCreateRequest
+from app.models.snapshot import SnapshotCreateRequest
 from app.services.bundle_preset_service import BundlePresetService
 from app.services.export_service import ExportService
 from app.services.notebook_registry import NotebookRegistryService
@@ -12,7 +17,14 @@ from app.storage.file_store import FileStore
 from app.storage.json_store import JsonStore
 
 
-def test_history_filters_by_type_tag_and_query(tmp_path: Path) -> None:
+def test_snapshots_endpoint_status() -> None:
+    client = TestClient(app)
+    response = client.get("/snapshots")
+    assert response.status_code == 200
+    assert isinstance(response.json(), list)
+
+
+def test_snapshot_creation_and_changelog(tmp_path: Path) -> None:
     notebooks_store = JsonStore(
         tmp_path / "notebooks.json",
         default_value=NotebookRegistryState().model_dump(mode="json"),
@@ -22,6 +34,7 @@ def test_history_filters_by_type_tag_and_query(tmp_path: Path) -> None:
     bundle_presets_store = JsonStore(tmp_path / "bundle_presets.json", default_value={"items": []})
     search_views_store = JsonStore(tmp_path / "search_views.json", default_value={"items": []})
     snapshots_store = JsonStore(tmp_path / "snapshots.json", default_value={"items": []})
+
     service = ResearchService(
         registry=NotebookRegistryService(notebooks_store),
         template_service=TemplateService(templates_store),
@@ -33,31 +46,34 @@ def test_history_filters_by_type_tag_and_query(tmp_path: Path) -> None:
         snapshots_store=snapshots_store,
     )
 
+    service.add_search_view(
+        SearchViewCreateRequest(
+            name="history-all",
+            scope="history",
+            description="all history",
+        )
+    )
+
     history_store.write(
         {
             "items": [
-                {
-                    "type": "ask",
-                    "payload": {
-                        "id": "a1",
-                        "question": "quick question",
-                        "tags": ["quick"],
-                        "created_at": "2026-01-01T00:00:00Z",
-                    },
-                },
-                {
-                    "type": "research",
-                    "payload": {
-                        "id": "r1",
-                        "topic": "deep topic",
-                        "tags": ["deep"],
-                        "created_at": "2026-01-02T00:00:00Z",
-                    },
-                },
+                {"type": "ask", "payload": {"id": "a1", "question": "q1"}},
+                {"type": "research", "payload": {"id": "r1", "topic": "t1"}},
             ]
         }
     )
+    first = service.create_snapshot(SnapshotCreateRequest(view_name="history-all"))
+    assert first.item_count == 2
+    assert len(first.changelog.added_ids) == 2
 
-    assert len(service.list_history(item_type="ask")) == 1
-    assert len(service.list_history(tag="deep")) == 1
-    assert len(service.list_history(query="quick")) == 1
+    history_store.write(
+        {
+            "items": [
+                {"type": "research", "payload": {"id": "r1", "topic": "t1"}},
+                {"type": "research", "payload": {"id": "r2", "topic": "t2"}},
+            ]
+        }
+    )
+    second = service.create_snapshot(SnapshotCreateRequest(view_name="history-all"))
+    assert "r2" in second.changelog.added_ids
+    assert "a1" in second.changelog.removed_ids

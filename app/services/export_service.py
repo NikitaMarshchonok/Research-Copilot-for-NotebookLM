@@ -3,6 +3,7 @@ from __future__ import annotations
 from app.models.artifact import ArtifactItem
 from app.models.query import AskResponse
 from app.models.report import BatchResearchResponse, ResearchResponse
+from app.models.snapshot import SnapshotEntry
 from app.storage.file_store import FileStore
 
 
@@ -54,6 +55,20 @@ class ExportService:
         md_path = self.file_store.save_markdown(bundle_name, markdown, prefix="bundle")
         json_path = self.file_store.save_json(bundle_name, payload, prefix="bundle")
         return {"markdown": str(md_path), "json": str(json_path)}
+
+    def export_snapshot(self, snapshot: SnapshotEntry) -> SnapshotEntry:
+        markdown = self._build_snapshot_markdown(snapshot)
+        md_path = self.file_store.save_markdown(
+            f"{snapshot.view_name}-{snapshot.id}", markdown, prefix="snapshot"
+        )
+        json_path = self.file_store.save_json(
+            f"{snapshot.view_name}-{snapshot.id}",
+            snapshot.model_dump(mode="json"),
+            prefix="snapshot",
+        )
+        snapshot.output_markdown_path = str(md_path)
+        snapshot.output_json_path = str(json_path)
+        return snapshot
 
     def _build_answer_markdown(self, response: AskResponse) -> str:
         sources = "\n".join(f"- {source}" for source in response.sources) or "- No sources"
@@ -134,4 +149,28 @@ class ExportService:
             lines.append("")
         if not items:
             lines.append("- No artifacts included.")
+        return "\n".join(lines)
+
+    def _build_snapshot_markdown(self, snapshot: SnapshotEntry) -> str:
+        lines = [
+            "# Search View Snapshot",
+            "",
+            "## Metadata",
+            f"- snapshot_id: `{snapshot.id}`",
+            f"- view_name: `{snapshot.view_name}`",
+            f"- scope: `{snapshot.scope}`",
+            f"- item_count: {snapshot.item_count}",
+            f"- created_at: {snapshot.created_at.isoformat()}",
+            "",
+            "## Changelog",
+            f"- added_ids: {len(snapshot.changelog.added_ids)}",
+            f"- removed_ids: {len(snapshot.changelog.removed_ids)}",
+            "",
+            "## Items",
+        ]
+        for item in snapshot.items:
+            title = item.get("title") or item.get("name") or item.get("id")
+            lines.append(f"- `{item.get('id', '')}`: {title}")
+        if not snapshot.items:
+            lines.append("- No items in snapshot.")
         return "\n".join(lines)

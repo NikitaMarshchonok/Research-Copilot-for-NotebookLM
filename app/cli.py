@@ -13,6 +13,7 @@ from app.models.bundle_preset import BundlePresetCreateRequest
 from app.models.query import AskRequest
 from app.models.report import ResearchRequest
 from app.models.search_view import SearchViewCreateRequest
+from app.models.snapshot import SnapshotCreateRequest
 from app.models.template import TemplateCreateRequest
 from app.models.workspace import WorkspaceCreateRequest
 
@@ -22,6 +23,7 @@ history_app = typer.Typer(help="History commands")
 artifacts_app = typer.Typer(help="Artifacts index commands")
 bundles_app = typer.Typer(help="Bundle preset commands")
 views_app = typer.Typer(help="Saved search view commands")
+snapshots_app = typer.Typer(help="Snapshot commands")
 templates_app = typer.Typer(help="Template commands")
 workspaces_app = typer.Typer(help="Workspace commands")
 app.add_typer(notebooks_app, name="notebooks")
@@ -29,6 +31,7 @@ app.add_typer(history_app, name="history")
 app.add_typer(artifacts_app, name="artifacts")
 app.add_typer(bundles_app, name="bundles")
 app.add_typer(views_app, name="views")
+app.add_typer(snapshots_app, name="snapshots")
 app.add_typer(templates_app, name="templates")
 app.add_typer(workspaces_app, name="workspaces")
 
@@ -48,9 +51,10 @@ def init_project() -> None:
     container.templates_store.ensure()
     container.bundle_presets_store.ensure()
     container.search_views_store.ensure()
+    container.snapshots_store.ensure()
     typer.echo(
         f"Initialized workspace '{container.active_workspace}' "
-        "(notebooks, history, templates, bundle presets, search views, outputs)."
+        "(notebooks, history, templates, bundle presets, search views, snapshots, outputs)."
     )
 
 
@@ -313,6 +317,38 @@ def views_delete(name: str = typer.Option(..., "--name")) -> None:
     container = _container()
     container.research_service.delete_search_view(name)
     typer.echo(f"Search view deleted: {name}")
+
+
+@snapshots_app.command("create")
+def snapshots_create(view_name: str = typer.Option(..., "--view")) -> None:
+    container = _container()
+    snapshot = container.research_service.create_snapshot(
+        SnapshotCreateRequest(view_name=view_name)
+    )
+    typer.echo(
+        f"Snapshot created: {snapshot.id} | view={snapshot.view_name} | items={snapshot.item_count}"
+    )
+
+
+@snapshots_app.command("list")
+def snapshots_list(view_name: Optional[str] = typer.Option(None, "--view")) -> None:
+    container = _container()
+    snapshots = container.research_service.list_snapshots(view_name=view_name)
+    if not snapshots:
+        typer.echo("No snapshots found.")
+        return
+    for snapshot in snapshots:
+        typer.echo(
+            f"{snapshot.id} | view={snapshot.view_name} | items={snapshot.item_count} | "
+            f"md={snapshot.output_markdown_path}"
+        )
+
+
+@snapshots_app.command("get")
+def snapshots_get(snapshot_id: str = typer.Option(..., "--id")) -> None:
+    container = _container()
+    snapshot = container.research_service.get_snapshot(snapshot_id)
+    typer.echo(snapshot.model_dump_json(indent=2))
 
 
 @history_app.command("list")

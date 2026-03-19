@@ -27,6 +27,7 @@ class ServiceContainer:
     templates_store: JsonStore
     bundle_presets_store: JsonStore
     search_views_store: JsonStore
+    snapshots_store: JsonStore
     notebook_registry: NotebookRegistryService
     template_service: TemplateService
     bundle_preset_service: BundlePresetService
@@ -66,6 +67,10 @@ def build_container() -> ServiceContainer:
         workspace_context.data_path / "search_views.json",
         default_value={"items": []},
     )
+    snapshots_store = JsonStore(
+        workspace_context.data_path / "snapshots.json",
+        default_value={"items": []},
+    )
 
     notebook_registry = NotebookRegistryService(notebooks_store)
     template_service = TemplateService(templates_store)
@@ -80,6 +85,7 @@ def build_container() -> ServiceContainer:
         notebooklm_client=_build_notebooklm_client(settings),
         export_service=export_service,
         history_store=history_store,
+        snapshots_store=snapshots_store,
     )
 
     return ServiceContainer(
@@ -91,6 +97,7 @@ def build_container() -> ServiceContainer:
         templates_store=templates_store,
         bundle_presets_store=bundle_presets_store,
         search_views_store=search_views_store,
+        snapshots_store=snapshots_store,
         notebook_registry=notebook_registry,
         template_service=template_service,
         bundle_preset_service=bundle_preset_service,

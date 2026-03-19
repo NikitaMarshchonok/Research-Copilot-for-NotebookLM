@@ -22,6 +22,7 @@ from app.services.prompt_templates import build_question
 from app.services.search_view_service import SearchViewService
 from app.services.template_service import TemplateService
 from app.models.search_view import SearchViewCreateRequest, SearchViewEntry, SearchViewRunResponse
+from app.models.snapshot import SnapshotCreateRequest, SnapshotDelta, SnapshotEntry, SnapshotListItem
 from app.storage.json_store import JsonStore
 
 logger = logging.getLogger(__name__)
@@ -37,6 +38,7 @@ class ResearchService:
         notebooklm_client: NotebookLMClient,
         export_service: ExportService,
         history_store: JsonStore,
+        snapshots_store: JsonStore,
     ) -> None:
         self.registry = registry
         self.template_service = template_service
@@ -45,7 +47,9 @@ class ResearchService:
         self.notebooklm_client = notebooklm_client
         self.export_service = export_service
         self.history_store = history_store
+        self.snapshots_store = snapshots_store
         self.history_store.ensure()
+        self.snapshots_store.ensure()
 
     def ask(self, request: AskRequest, save_outputs: bool = True) -> AskResponse:
         notebook = self.registry.select_active(request.notebook_id) if request.notebook_id else self.registry.get_active()
@@ -362,6 +366,63 @@ class ResearchService:
             item_count=len(serialized),
             items=serialized,
         )
+
+    def create_snapshot(self, payload: SnapshotCreateRequest) -> SnapshotEntry:
+        current = self.run_search_view(payload.view_name)
+        previous = self._get_latest_snapshot_for_view(payload.view_name)
+        previous_ids = {str(item.get("id", "")) for item in previous.items} if previous else set()
+        current_ids = {str(item.get("id", "")) for item in current.items}
+        delta = SnapshotDelta(
+            added_ids=sorted(current_ids - previous_ids),
+            removed_ids=sorted(previous_ids - current_ids),
+        )
+        snapshot = SnapshotEntry(
+            view_name=current.name,
+            scope=current.scope,
+            item_count=current.item_count,
+            changelog=delta,
+            items=current.items,
+        )
+        snapshot = self.export_service.export_snapshot(snapshot)
+        data = self.snapshots_store.read()
+        data.setdefault("items", []).append(snapshot.model_dump(mode="json"))
+        self.snapshots_store.write(data)
+        return snapshot
+
+    def list_snapshots(self, view_name: str | None = None) -> list[SnapshotListItem]:
+        data = self.snapshots_store.read()
+        results: list[SnapshotListItem] = []
+        for item in data.get("items", []):
+            snapshot = SnapshotEntry.model_validate(item)
+            if view_name and snapshot.view_name.strip().lower() != view_name.strip().lower():
+                continue
+            results.append(
+                SnapshotListItem(
+                    id=snapshot.id,
+                    view_name=snapshot.view_name,
+                    scope=snapshot.scope,
+                    item_count=snapshot.item_count,
+                    created_at=snapshot.created_at,
+                    output_markdown_path=snapshot.output_markdown_path,
+                    output_json_path=snapshot.output_json_path,
+                )
+            )
+        results.sort(key=lambda item: item.created_at.isoformat(), reverse=True)
+        return results
+
+    def get_snapshot(self, snapshot_id: str) -> SnapshotEntry:
+        data = self.snapshots_store.read()
+        for item in data.get("items", []):
+            snapshot = SnapshotEntry.model_validate(item)
+            if snapshot.id == snapshot_id:
+                return snapshot
+        raise NotFoundError(f"Snapshot '{snapshot_id}' not found.")
+
+    def _get_latest_snapshot_for_view(self, view_name: str) -> SnapshotEntry | None:
+        snapshots = self.list_snapshots(view_name=view_name)
+        if not snapshots:
+            return None
+        return self.get_snapshot(snapshots[0].id)
 
     def get_history_item(self, item_id: str) -> HistoryItem:
         history = self.history_store.read()

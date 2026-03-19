@@ -332,6 +332,40 @@ if search_view_map:
             except requests.RequestException as exc:
                 st.error(f"Saved view delete failed: {exc}")
 
+st.subheader("Materialized Snapshots")
+if search_view_map:
+    snapshot_view_name = st.selectbox(
+        "Snapshot from view",
+        sorted(search_view_map.keys()),
+        key="snapshot_view_name",
+    )
+    snapshot_col_1, snapshot_col_2 = st.columns(2)
+    with snapshot_col_1:
+        if st.button("Create Snapshot"):
+            try:
+                snapshot = api_post("/snapshots", {"view_name": snapshot_view_name})
+                st.json(snapshot)
+            except requests.RequestException as exc:
+                st.error(f"Snapshot creation failed: {exc}")
+    with snapshot_col_2:
+        if st.button("Refresh Snapshots"):
+            try:
+                snapshots = api_get("/snapshots", params={"view_name": snapshot_view_name})
+                st.json(snapshots)
+            except requests.RequestException as exc:
+                st.error(f"Snapshot list failed: {exc}")
+
+snapshot_id = st.text_input("Snapshot id (for details)", key="snapshot_id")
+if st.button("Get Snapshot by ID"):
+    if not snapshot_id.strip():
+        st.error("Please provide snapshot id.")
+    else:
+        try:
+            snapshot = api_get(f"/snapshots/{snapshot_id.strip()}")
+            st.json(snapshot)
+        except requests.RequestException as exc:
+            st.error(f"Snapshot fetch failed: {exc}")
+
 st.subheader("Artifacts Index")
 artifact_filter = st.selectbox(
     "Artifact type filter",

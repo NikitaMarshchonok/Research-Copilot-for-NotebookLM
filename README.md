@@ -44,6 +44,7 @@ research-copilot/
 │   │   ├── query.py
 │   │   ├── report.py
 │   │   ├── search_view.py
+│   │   ├── snapshot.py
 │   │   ├── template.py
 │   │   └── workspace.py
 │   ├── services/
@@ -68,6 +69,7 @@ research-copilot/
 │   ├── bundle_presets.json
 │   ├── notebooks.json
 │   ├── search_views.json
+│   ├── snapshots.json
 │   ├── templates.json
 │   └── workspaces.json
 ├── outputs/
@@ -85,6 +87,7 @@ research-copilot/
 │   ├── test_notebooks_active.py
 │   ├── test_registry.py
 │   ├── test_search_views.py
+│   ├── test_snapshots.py
 │   ├── test_templates.py
 │   ├── test_templates_endpoint.py
 │   ├── test_workspace_service.py
@@ -185,6 +188,10 @@ python -m app.cli views list
 python -m app.cli views add --name "deep-research" --scope history --type research --tag deep --query "MCP"
 python -m app.cli views run --name "deep-research"
 python -m app.cli views delete --name "deep-research"
+
+python -m app.cli snapshots create --view deep-research
+python -m app.cli snapshots list --view deep-research
+python -m app.cli snapshots get --id <SNAPSHOT_ID>
 ```
 
 Artifacts are written into `outputs/`.
@@ -227,6 +234,9 @@ Endpoints:
 - `POST /search-views`
 - `DELETE /search-views/{view_name}`
 - `GET /search-views/{view_name}/run`
+- `POST /snapshots`
+- `GET /snapshots`
+- `GET /snapshots/{snapshot_id}`
 - `POST /export` (alias: `POST /exports`)
 
 Open docs: <http://127.0.0.1:8000/docs>
@@ -253,6 +263,7 @@ It supports:
 - custom bundle presets per workspace
 - history/artifact filtering by tags and search query
 - saved search views per workspace
+- materialized snapshots from saved views
 
 Optional API URL override for UI:
 
