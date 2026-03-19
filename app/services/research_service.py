@@ -19,7 +19,9 @@ from app.services.bundle_preset_service import BundlePresetService
 from app.services.notebook_registry import NotebookRegistryService
 from app.services.notebooklm_client import NotebookLMClient
 from app.services.prompt_templates import build_question
+from app.services.search_view_service import SearchViewService
 from app.services.template_service import TemplateService
+from app.models.search_view import SearchViewCreateRequest, SearchViewEntry, SearchViewRunResponse
 from app.storage.json_store import JsonStore
 
 logger = logging.getLogger(__name__)
@@ -31,6 +33,7 @@ class ResearchService:
         registry: NotebookRegistryService,
         template_service: TemplateService,
         bundle_preset_service: BundlePresetService,
+        search_view_service: SearchViewService,
         notebooklm_client: NotebookLMClient,
         export_service: ExportService,
         history_store: JsonStore,
@@ -38,6 +41,7 @@ class ResearchService:
         self.registry = registry
         self.template_service = template_service
         self.bundle_preset_service = bundle_preset_service
+        self.search_view_service = search_view_service
         self.notebooklm_client = notebooklm_client
         self.export_service = export_service
         self.history_store = history_store
@@ -323,6 +327,41 @@ class ResearchService:
 
     def delete_bundle_preset(self, name: str) -> None:
         self.bundle_preset_service.delete_preset(name)
+
+    def list_search_views(self) -> list[SearchViewEntry]:
+        return self.search_view_service.list_views()
+
+    def add_search_view(self, payload: SearchViewCreateRequest) -> SearchViewEntry:
+        return self.search_view_service.add_view(payload)
+
+    def delete_search_view(self, name: str) -> None:
+        self.search_view_service.delete_view(name)
+
+    def run_search_view(self, name: str) -> SearchViewRunResponse:
+        view = self.search_view_service.get_view(name)
+        if view.scope == "history":
+            items = self.list_history(item_type=view.item_type, tag=view.tag, query=view.query)
+            serialized = [item.model_dump(mode="json") for item in items]
+            return SearchViewRunResponse(
+                name=view.name,
+                scope=view.scope,
+                item_count=len(serialized),
+                items=serialized,
+            )
+
+        items = self.list_artifacts(
+            item_type=view.item_type,
+            template_name=view.template_name,
+            tag=view.tag,
+            query=view.query,
+        )
+        serialized = [item.model_dump(mode="json") for item in items]
+        return SearchViewRunResponse(
+            name=view.name,
+            scope=view.scope,
+            item_count=len(serialized),
+            items=serialized,
+        )
 
     def get_history_item(self, item_id: str) -> HistoryItem:
         history = self.history_store.read()

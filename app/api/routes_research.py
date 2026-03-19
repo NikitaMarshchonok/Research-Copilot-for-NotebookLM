@@ -15,6 +15,7 @@ from app.models.export import (
 from app.models.history import HistoryItem, HistorySummary
 from app.models.query import AskRequest, AskResponse
 from app.models.report import BatchResearchResponse, ResearchRequest, ResearchResponse
+from app.models.search_view import SearchViewCreateRequest, SearchViewEntry, SearchViewRunResponse
 from app.models.template import (
     RunBatchTemplateRequest,
     RunTemplateRequest,
@@ -103,6 +104,33 @@ def delete_bundle_preset(
 ) -> dict[str, str]:
     container.research_service.delete_bundle_preset(preset_name)
     return {"status": "deleted", "preset": preset_name}
+
+
+@router.get("/search-views", response_model=list[SearchViewEntry])
+def list_search_views(container: ServiceContainer = Depends(get_container)) -> list[SearchViewEntry]:
+    return container.research_service.list_search_views()
+
+
+@router.post("/search-views", response_model=SearchViewEntry)
+def add_search_view(
+    payload: SearchViewCreateRequest, container: ServiceContainer = Depends(get_container)
+) -> SearchViewEntry:
+    return container.research_service.add_search_view(payload)
+
+
+@router.delete("/search-views/{view_name}")
+def delete_search_view(
+    view_name: str, container: ServiceContainer = Depends(get_container)
+) -> dict[str, str]:
+    container.research_service.delete_search_view(view_name)
+    return {"status": "deleted", "view": view_name}
+
+
+@router.get("/search-views/{view_name}/run", response_model=SearchViewRunResponse)
+def run_search_view(
+    view_name: str, container: ServiceContainer = Depends(get_container)
+) -> SearchViewRunResponse:
+    return container.research_service.run_search_view(view_name)
 
 
 @router.get("/history", response_model=list[HistorySummary])

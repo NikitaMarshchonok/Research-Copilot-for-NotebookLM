@@ -269,6 +269,69 @@ if st.button("Refresh History"):
     except requests.RequestException as exc:
         st.error(f"History load failed: {exc}")
 
+st.subheader("Saved Search Views")
+search_view_map: dict[str, dict] = {}
+try:
+    search_views = api_get("/search-views")
+    search_view_map = {item["name"]: item for item in search_views}
+except requests.RequestException as exc:
+    st.warning(f"Could not load search views: {exc}")
+
+with st.form("add_search_view"):
+    st.caption("Create a reusable search filter")
+    search_view_name = st.text_input("View name")
+    search_view_scope = st.selectbox("Scope", ["history", "artifacts"])
+    search_view_type = st.selectbox(
+        "Type filter",
+        ["", "ask", "research", "batch_research"],
+        format_func=lambda value: value or "<none>",
+    )
+    search_view_template = st.text_input("Template filter (artifacts only)")
+    search_view_tag = st.text_input("Tag filter")
+    search_view_query = st.text_input("Query filter")
+    search_view_description = st.text_input("Description")
+    add_search_view = st.form_submit_button("Add Search View")
+    if add_search_view:
+        try:
+            created = api_post(
+                "/search-views",
+                {
+                    "name": search_view_name,
+                    "scope": search_view_scope,
+                    "item_type": search_view_type or None,
+                    "template_name": search_view_template or None,
+                    "tag": search_view_tag or None,
+                    "query": search_view_query or None,
+                    "description": search_view_description,
+                },
+            )
+            st.success(f"Search view added: {created['name']}")
+        except requests.RequestException as exc:
+            st.error(f"Search view creation failed: {exc}")
+
+if search_view_map:
+    selected_view = st.selectbox("Saved view", sorted(search_view_map.keys()), key="saved_search_view")
+    selected_meta = search_view_map[selected_view]
+    st.caption(
+        f"scope={selected_meta.get('scope')} | type={selected_meta.get('item_type')} | "
+        f"tag={selected_meta.get('tag')} | query={selected_meta.get('query')}"
+    )
+    view_col_1, view_col_2 = st.columns(2)
+    with view_col_1:
+        if st.button("Run Saved View"):
+            try:
+                result = api_get(f"/search-views/{selected_view}/run")
+                st.json(result)
+            except requests.RequestException as exc:
+                st.error(f"Saved view run failed: {exc}")
+    with view_col_2:
+        if st.button("Delete Saved View"):
+            try:
+                requests.delete(f"{API_BASE}/search-views/{selected_view}", timeout=30).raise_for_status()
+                st.success(f"Search view deleted: {selected_view}")
+            except requests.RequestException as exc:
+                st.error(f"Saved view delete failed: {exc}")
+
 st.subheader("Artifacts Index")
 artifact_filter = st.selectbox(
     "Artifact type filter",

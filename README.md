@@ -43,6 +43,7 @@ research-copilot/
 │   │   ├── notebook.py
 │   │   ├── query.py
 │   │   ├── report.py
+│   │   ├── search_view.py
 │   │   ├── template.py
 │   │   └── workspace.py
 │   ├── services/
@@ -52,6 +53,7 @@ research-copilot/
 │   │   ├── notebooklm_client.py
 │   │   ├── prompt_templates.py
 │   │   ├── research_service.py
+│   │   ├── search_view_service.py
 │   │   ├── template_service.py
 │   │   └── workspace_service.py
 │   ├── storage/
@@ -65,6 +67,7 @@ research-copilot/
 │   ├── history.json
 │   ├── bundle_presets.json
 │   ├── notebooks.json
+│   ├── search_views.json
 │   ├── templates.json
 │   └── workspaces.json
 ├── outputs/
@@ -81,6 +84,7 @@ research-copilot/
 │   ├── test_history.py
 │   ├── test_notebooks_active.py
 │   ├── test_registry.py
+│   ├── test_search_views.py
 │   ├── test_templates.py
 │   ├── test_templates_endpoint.py
 │   ├── test_workspace_service.py
@@ -176,6 +180,11 @@ python -m app.cli export-bundle --name article-pack
 python -m app.cli bundles list
 python -m app.cli bundles add --name "my-pack" --type research --type ask --description "for article draft"
 python -m app.cli bundles delete --name "my-pack"
+
+python -m app.cli views list
+python -m app.cli views add --name "deep-research" --scope history --type research --tag deep --query "MCP"
+python -m app.cli views run --name "deep-research"
+python -m app.cli views delete --name "deep-research"
 ```
 
 Artifacts are written into `outputs/`.
@@ -214,6 +223,10 @@ Endpoints:
 - `GET /bundle-presets`
 - `POST /bundle-presets`
 - `DELETE /bundle-presets/{preset_name}`
+- `GET /search-views`
+- `POST /search-views`
+- `DELETE /search-views/{view_name}`
+- `GET /search-views/{view_name}/run`
 - `POST /export` (alias: `POST /exports`)
 
 Open docs: <http://127.0.0.1:8000/docs>
@@ -236,8 +249,10 @@ It supports:
 - artifacts index with filters
 - quick "latest artifact" lookup and export
 - artifact bundle export for article/brief packs
+- saved search views create/run/delete
 - custom bundle presets per workspace
 - history/artifact filtering by tags and search query
+- saved search views per workspace
 
 Optional API URL override for UI:
 

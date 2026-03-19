@@ -10,6 +10,7 @@ from app.services.bundle_preset_service import BundlePresetService
 from app.services.notebook_registry import NotebookRegistryService
 from app.services.notebooklm_client import BridgeNotebookLMClient, NotebookLMClient, StubNotebookLMClient
 from app.services.research_service import ResearchService
+from app.services.search_view_service import SearchViewService
 from app.services.template_service import TemplateService
 from app.services.workspace_service import WorkspaceService
 from app.storage.file_store import FileStore
@@ -25,9 +26,11 @@ class ServiceContainer:
     history_store: JsonStore
     templates_store: JsonStore
     bundle_presets_store: JsonStore
+    search_views_store: JsonStore
     notebook_registry: NotebookRegistryService
     template_service: TemplateService
     bundle_preset_service: BundlePresetService
+    search_view_service: SearchViewService
     research_service: ResearchService
 
 
@@ -59,15 +62,21 @@ def build_container() -> ServiceContainer:
         workspace_context.data_path / "bundle_presets.json",
         default_value={"items": []},
     )
+    search_views_store = JsonStore(
+        workspace_context.data_path / "search_views.json",
+        default_value={"items": []},
+    )
 
     notebook_registry = NotebookRegistryService(notebooks_store)
     template_service = TemplateService(templates_store)
     bundle_preset_service = BundlePresetService(bundle_presets_store)
+    search_view_service = SearchViewService(search_views_store)
     export_service = ExportService(FileStore(workspace_context.outputs_path))
     research_service = ResearchService(
         registry=notebook_registry,
         template_service=template_service,
         bundle_preset_service=bundle_preset_service,
+        search_view_service=search_view_service,
         notebooklm_client=_build_notebooklm_client(settings),
         export_service=export_service,
         history_store=history_store,
@@ -81,8 +90,10 @@ def build_container() -> ServiceContainer:
         history_store=history_store,
         templates_store=templates_store,
         bundle_presets_store=bundle_presets_store,
+        search_views_store=search_views_store,
         notebook_registry=notebook_registry,
         template_service=template_service,
         bundle_preset_service=bundle_preset_service,
+        search_view_service=search_view_service,
         research_service=research_service,
     )

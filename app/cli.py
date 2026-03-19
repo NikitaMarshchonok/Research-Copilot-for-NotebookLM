@@ -12,6 +12,7 @@ from app.models.notebook import NotebookCreate
 from app.models.bundle_preset import BundlePresetCreateRequest
 from app.models.query import AskRequest
 from app.models.report import ResearchRequest
+from app.models.search_view import SearchViewCreateRequest
 from app.models.template import TemplateCreateRequest
 from app.models.workspace import WorkspaceCreateRequest
 
@@ -20,12 +21,14 @@ notebooks_app = typer.Typer(help="Notebook registry commands")
 history_app = typer.Typer(help="History commands")
 artifacts_app = typer.Typer(help="Artifacts index commands")
 bundles_app = typer.Typer(help="Bundle preset commands")
+views_app = typer.Typer(help="Saved search view commands")
 templates_app = typer.Typer(help="Template commands")
 workspaces_app = typer.Typer(help="Workspace commands")
 app.add_typer(notebooks_app, name="notebooks")
 app.add_typer(history_app, name="history")
 app.add_typer(artifacts_app, name="artifacts")
 app.add_typer(bundles_app, name="bundles")
+app.add_typer(views_app, name="views")
 app.add_typer(templates_app, name="templates")
 app.add_typer(workspaces_app, name="workspaces")
 
@@ -44,9 +47,10 @@ def init_project() -> None:
     container.history_store.ensure()
     container.templates_store.ensure()
     container.bundle_presets_store.ensure()
+    container.search_views_store.ensure()
     typer.echo(
         f"Initialized workspace '{container.active_workspace}' "
-        "(notebooks, history, templates, bundle presets, outputs)."
+        "(notebooks, history, templates, bundle presets, search views, outputs)."
     )
 
 
@@ -260,6 +264,55 @@ def bundles_delete(name: str = typer.Option(..., "--name")) -> None:
     container = _container()
     container.research_service.delete_bundle_preset(name)
     typer.echo(f"Bundle preset deleted: {name}")
+
+
+@views_app.command("list")
+def views_list() -> None:
+    container = _container()
+    for view in container.research_service.list_search_views():
+        typer.echo(
+            f"{view.name} | scope={view.scope} | type={view.item_type} | "
+            f"template={view.template_name} | tag={view.tag} | query={view.query}"
+        )
+
+
+@views_app.command("add")
+def views_add(
+    name: str = typer.Option(..., "--name"),
+    scope: str = typer.Option(..., "--scope", help="history|artifacts"),
+    item_type: Optional[str] = typer.Option(None, "--type"),
+    template_name: Optional[str] = typer.Option(None, "--template"),
+    tag: Optional[str] = typer.Option(None, "--tag"),
+    query: Optional[str] = typer.Option(None, "--query"),
+    description: str = typer.Option("", "--description"),
+) -> None:
+    container = _container()
+    view = container.research_service.add_search_view(
+        SearchViewCreateRequest(
+            name=name,
+            scope=scope,  # type: ignore[arg-type]
+            item_type=item_type,
+            template_name=template_name,
+            tag=tag,
+            query=query,
+            description=description,
+        )
+    )
+    typer.echo(f"Search view added: {view.name}")
+
+
+@views_app.command("run")
+def views_run(name: str = typer.Option(..., "--name")) -> None:
+    container = _container()
+    result = container.research_service.run_search_view(name)
+    typer.echo(result.model_dump_json(indent=2))
+
+
+@views_app.command("delete")
+def views_delete(name: str = typer.Option(..., "--name")) -> None:
+    container = _container()
+    container.research_service.delete_search_view(name)
+    typer.echo(f"Search view deleted: {name}")
 
 
 @history_app.command("list")
