@@ -192,6 +192,8 @@ python -m app.cli views delete --name "deep-research"
 python -m app.cli snapshots create --view deep-research
 python -m app.cli snapshots list --view deep-research
 python -m app.cli snapshots get --id <SNAPSHOT_ID>
+python -m app.cli snapshots diff --from <SNAPSHOT_ID_A> --to <SNAPSHOT_ID_B>
+python -m app.cli snapshots diff-export --from <SNAPSHOT_ID_A> --to <SNAPSHOT_ID_B>
 ```
 
 Artifacts are written into `outputs/`.
@@ -237,6 +239,8 @@ Endpoints:
 - `POST /snapshots`
 - `GET /snapshots`
 - `GET /snapshots/{snapshot_id}`
+- `POST /snapshots/diff`
+- `POST /snapshots/diff/export`
 - `POST /export` (alias: `POST /exports`)
 
 Open docs: <http://127.0.0.1:8000/docs>
@@ -264,6 +268,7 @@ It supports:
 - history/artifact filtering by tags and search query
 - saved search views per workspace
 - materialized snapshots from saved views
+- snapshot diff reports between two snapshots
 
 Optional API URL override for UI:
 

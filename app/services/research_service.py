@@ -23,6 +23,7 @@ from app.services.search_view_service import SearchViewService
 from app.services.template_service import TemplateService
 from app.models.search_view import SearchViewCreateRequest, SearchViewEntry, SearchViewRunResponse
 from app.models.snapshot import SnapshotCreateRequest, SnapshotDelta, SnapshotEntry, SnapshotListItem
+from app.models.snapshot import SnapshotDiffResponse
 from app.storage.json_store import JsonStore
 
 logger = logging.getLogger(__name__)
@@ -417,6 +418,29 @@ class ResearchService:
             if snapshot.id == snapshot_id:
                 return snapshot
         raise NotFoundError(f"Snapshot '{snapshot_id}' not found.")
+
+    def diff_snapshots(self, from_snapshot_id: str, to_snapshot_id: str) -> SnapshotDiffResponse:
+        source = self.get_snapshot(from_snapshot_id)
+        target = self.get_snapshot(to_snapshot_id)
+
+        source_ids = {str(item.get("id", "")) for item in source.items}
+        target_ids = {str(item.get("id", "")) for item in target.items}
+
+        return SnapshotDiffResponse(
+            from_snapshot_id=source.id,
+            to_snapshot_id=target.id,
+            from_view_name=source.view_name,
+            to_view_name=target.view_name,
+            from_item_count=source.item_count,
+            to_item_count=target.item_count,
+            added_ids=sorted(target_ids - source_ids),
+            removed_ids=sorted(source_ids - target_ids),
+            common_ids=sorted(source_ids & target_ids),
+        )
+
+    def export_snapshot_diff(self, from_snapshot_id: str, to_snapshot_id: str) -> dict[str, str]:
+        diff = self.diff_snapshots(from_snapshot_id, to_snapshot_id)
+        return self.export_service.export_snapshot_diff(diff)
 
     def _get_latest_snapshot_for_view(self, view_name: str) -> SnapshotEntry | None:
         snapshots = self.list_snapshots(view_name=view_name)

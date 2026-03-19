@@ -366,6 +366,48 @@ if st.button("Get Snapshot by ID"):
         except requests.RequestException as exc:
             st.error(f"Snapshot fetch failed: {exc}")
 
+st.subheader("Snapshot Diff")
+diff_col_1, diff_col_2 = st.columns(2)
+with diff_col_1:
+    from_snapshot_id = st.text_input("From snapshot id", key="from_snapshot_id")
+with diff_col_2:
+    to_snapshot_id = st.text_input("To snapshot id", key="to_snapshot_id")
+
+diff_action_col_1, diff_action_col_2 = st.columns(2)
+with diff_action_col_1:
+    if st.button("Run Snapshot Diff"):
+        if not from_snapshot_id.strip() or not to_snapshot_id.strip():
+            st.error("Provide both from/to snapshot ids.")
+        else:
+            try:
+                diff = api_post(
+                    "/snapshots/diff",
+                    {
+                        "from_snapshot_id": from_snapshot_id.strip(),
+                        "to_snapshot_id": to_snapshot_id.strip(),
+                    },
+                )
+                st.json(diff)
+            except requests.RequestException as exc:
+                st.error(f"Snapshot diff failed: {exc}")
+
+with diff_action_col_2:
+    if st.button("Export Snapshot Diff"):
+        if not from_snapshot_id.strip() or not to_snapshot_id.strip():
+            st.error("Provide both from/to snapshot ids.")
+        else:
+            try:
+                exported = api_post(
+                    "/snapshots/diff/export",
+                    {
+                        "from_snapshot_id": from_snapshot_id.strip(),
+                        "to_snapshot_id": to_snapshot_id.strip(),
+                    },
+                )
+                st.json(exported)
+            except requests.RequestException as exc:
+                st.error(f"Snapshot diff export failed: {exc}")
+
 st.subheader("Artifacts Index")
 artifact_filter = st.selectbox(
     "Artifact type filter",

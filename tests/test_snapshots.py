@@ -22,6 +22,11 @@ def test_snapshots_endpoint_status() -> None:
     response = client.get("/snapshots")
     assert response.status_code == 200
     assert isinstance(response.json(), list)
+    diff_response = client.post(
+        "/snapshots/diff",
+        json={"from_snapshot_id": "missing-a", "to_snapshot_id": "missing-b"},
+    )
+    assert diff_response.status_code == 400
 
 
 def test_snapshot_creation_and_changelog(tmp_path: Path) -> None:
@@ -77,3 +82,11 @@ def test_snapshot_creation_and_changelog(tmp_path: Path) -> None:
     second = service.create_snapshot(SnapshotCreateRequest(view_name="history-all"))
     assert "r2" in second.changelog.added_ids
     assert "a1" in second.changelog.removed_ids
+
+    diff = service.diff_snapshots(first.id, second.id)
+    assert "r2" in diff.added_ids
+    assert "a1" in diff.removed_ids
+
+    exported = service.export_snapshot_diff(first.id, second.id)
+    assert "markdown" in exported
+    assert "json" in exported

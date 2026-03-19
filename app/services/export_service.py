@@ -3,7 +3,7 @@ from __future__ import annotations
 from app.models.artifact import ArtifactItem
 from app.models.query import AskResponse
 from app.models.report import BatchResearchResponse, ResearchResponse
-from app.models.snapshot import SnapshotEntry
+from app.models.snapshot import SnapshotDiffResponse, SnapshotEntry
 from app.storage.file_store import FileStore
 
 
@@ -69,6 +69,20 @@ class ExportService:
         snapshot.output_markdown_path = str(md_path)
         snapshot.output_json_path = str(json_path)
         return snapshot
+
+    def export_snapshot_diff(self, diff: SnapshotDiffResponse) -> dict[str, str]:
+        markdown = self._build_snapshot_diff_markdown(diff)
+        md_path = self.file_store.save_markdown(
+            f"diff-{diff.from_snapshot_id[:8]}-{diff.to_snapshot_id[:8]}",
+            markdown,
+            prefix="snapshot-diff",
+        )
+        json_path = self.file_store.save_json(
+            f"diff-{diff.from_snapshot_id[:8]}-{diff.to_snapshot_id[:8]}",
+            diff.model_dump(mode="json"),
+            prefix="snapshot-diff",
+        )
+        return {"markdown": str(md_path), "json": str(json_path)}
 
     def _build_answer_markdown(self, response: AskResponse) -> str:
         sources = "\n".join(f"- {source}" for source in response.sources) or "- No sources"
@@ -173,4 +187,32 @@ class ExportService:
             lines.append(f"- `{item.get('id', '')}`: {title}")
         if not snapshot.items:
             lines.append("- No items in snapshot.")
+        return "\n".join(lines)
+
+    def _build_snapshot_diff_markdown(self, diff: SnapshotDiffResponse) -> str:
+        lines = [
+            "# Snapshot Diff Report",
+            "",
+            "## Metadata",
+            f"- from_snapshot_id: `{diff.from_snapshot_id}`",
+            f"- to_snapshot_id: `{diff.to_snapshot_id}`",
+            f"- from_view_name: `{diff.from_view_name}`",
+            f"- to_view_name: `{diff.to_view_name}`",
+            f"- from_item_count: {diff.from_item_count}",
+            f"- to_item_count: {diff.to_item_count}",
+            "",
+            "## Changes Summary",
+            f"- added: {len(diff.added_ids)}",
+            f"- removed: {len(diff.removed_ids)}",
+            f"- common: {len(diff.common_ids)}",
+            "",
+            "## Added IDs",
+        ]
+        lines.extend([f"- {item}" for item in diff.added_ids] or ["- None"])
+        lines.append("")
+        lines.append("## Removed IDs")
+        lines.extend([f"- {item}" for item in diff.removed_ids] or ["- None"])
+        lines.append("")
+        lines.append("## Common IDs")
+        lines.extend([f"- {item}" for item in diff.common_ids] or ["- None"])
         return "\n".join(lines)

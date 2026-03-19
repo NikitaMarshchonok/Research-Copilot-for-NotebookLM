@@ -351,6 +351,32 @@ def snapshots_get(snapshot_id: str = typer.Option(..., "--id")) -> None:
     typer.echo(snapshot.model_dump_json(indent=2))
 
 
+@snapshots_app.command("diff")
+def snapshots_diff(
+    from_snapshot_id: str = typer.Option(..., "--from"),
+    to_snapshot_id: str = typer.Option(..., "--to"),
+) -> None:
+    container = _container()
+    diff = container.research_service.diff_snapshots(
+        from_snapshot_id=from_snapshot_id,
+        to_snapshot_id=to_snapshot_id,
+    )
+    typer.echo(diff.model_dump_json(indent=2))
+
+
+@snapshots_app.command("diff-export")
+def snapshots_diff_export(
+    from_snapshot_id: str = typer.Option(..., "--from"),
+    to_snapshot_id: str = typer.Option(..., "--to"),
+) -> None:
+    container = _container()
+    paths = container.research_service.export_snapshot_diff(
+        from_snapshot_id=from_snapshot_id,
+        to_snapshot_id=to_snapshot_id,
+    )
+    typer.echo(json.dumps(paths, ensure_ascii=False, indent=2))
+
+
 @history_app.command("list")
 def history_list(
     item_type: Optional[str] = typer.Option(

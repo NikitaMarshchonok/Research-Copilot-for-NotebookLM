@@ -40,3 +40,25 @@ class SnapshotListItem(BaseModel):
     created_at: datetime
     output_markdown_path: str | None = None
     output_json_path: str | None = None
+
+
+class SnapshotDiffRequest(BaseModel):
+    from_snapshot_id: str
+    to_snapshot_id: str
+
+
+class SnapshotDiffResponse(BaseModel):
+    from_snapshot_id: str
+    to_snapshot_id: str
+    from_view_name: str
+    to_view_name: str
+    from_item_count: int
+    to_item_count: int
+    added_ids: list[str] = Field(default_factory=list)
+    removed_ids: list[str] = Field(default_factory=list)
+    common_ids: list[str] = Field(default_factory=list)
+
+
+class SnapshotDiffExportResponse(BaseModel):
+    markdown: str
+    json_path: str

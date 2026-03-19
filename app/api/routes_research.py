@@ -16,7 +16,14 @@ from app.models.history import HistoryItem, HistorySummary
 from app.models.query import AskRequest, AskResponse
 from app.models.report import BatchResearchResponse, ResearchRequest, ResearchResponse
 from app.models.search_view import SearchViewCreateRequest, SearchViewEntry, SearchViewRunResponse
-from app.models.snapshot import SnapshotCreateRequest, SnapshotEntry, SnapshotListItem
+from app.models.snapshot import (
+    SnapshotCreateRequest,
+    SnapshotDiffExportResponse,
+    SnapshotDiffRequest,
+    SnapshotDiffResponse,
+    SnapshotEntry,
+    SnapshotListItem,
+)
 from app.models.template import (
     RunBatchTemplateRequest,
     RunTemplateRequest,
@@ -154,6 +161,27 @@ def get_snapshot(
     snapshot_id: str, container: ServiceContainer = Depends(get_container)
 ) -> SnapshotEntry:
     return container.research_service.get_snapshot(snapshot_id)
+
+
+@router.post("/snapshots/diff", response_model=SnapshotDiffResponse)
+def diff_snapshots(
+    payload: SnapshotDiffRequest, container: ServiceContainer = Depends(get_container)
+) -> SnapshotDiffResponse:
+    return container.research_service.diff_snapshots(
+        from_snapshot_id=payload.from_snapshot_id,
+        to_snapshot_id=payload.to_snapshot_id,
+    )
+
+
+@router.post("/snapshots/diff/export", response_model=SnapshotDiffExportResponse)
+def export_snapshot_diff(
+    payload: SnapshotDiffRequest, container: ServiceContainer = Depends(get_container)
+) -> SnapshotDiffExportResponse:
+    paths = container.research_service.export_snapshot_diff(
+        from_snapshot_id=payload.from_snapshot_id,
+        to_snapshot_id=payload.to_snapshot_id,
+    )
+    return SnapshotDiffExportResponse(markdown=paths["markdown"], json_path=paths["json"])
 
 
 @router.get("/history", response_model=list[HistorySummary])
