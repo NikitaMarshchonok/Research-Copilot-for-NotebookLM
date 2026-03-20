@@ -458,6 +458,48 @@ with diff_action_col_2:
             except requests.RequestException as exc:
                 st.error(f"Snapshot diff export failed: {exc}")
 
+st.subheader("Snapshot Diff Digest")
+digest_views = st.multiselect(
+    "Views for digest (empty = all saved views)",
+    options=sorted(search_view_map.keys()),
+    key="snapshot_digest_views",
+)
+digest_top = st.slider("Top changed IDs per view", min_value=1, max_value=20, value=5, step=1)
+digest_include_missing = st.checkbox(
+    "Include skipped/missing views in digest",
+    value=True,
+    key="snapshot_digest_include_missing",
+)
+digest_col_1, digest_col_2 = st.columns(2)
+with digest_col_1:
+    if st.button("Generate Snapshot Digest"):
+        try:
+            digest = api_post(
+                "/snapshots/diff/digest",
+                {
+                    "view_names": digest_views,
+                    "top_items": digest_top,
+                    "include_missing": digest_include_missing,
+                },
+            )
+            st.json(digest)
+        except requests.RequestException as exc:
+            st.error(f"Snapshot digest failed: {exc}")
+with digest_col_2:
+    if st.button("Export Snapshot Digest"):
+        try:
+            digest_export = api_post(
+                "/snapshots/diff/digest/export",
+                {
+                    "view_names": digest_views,
+                    "top_items": digest_top,
+                    "include_missing": digest_include_missing,
+                },
+            )
+            st.json(digest_export)
+        except requests.RequestException as exc:
+            st.error(f"Snapshot digest export failed: {exc}")
+
 st.subheader("Artifacts Index")
 artifact_filter = st.selectbox(
     "Artifact type filter",

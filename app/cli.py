@@ -423,6 +423,36 @@ def snapshots_diff_latest_brief(
     typer.echo(f"Top removed: {', '.join(brief.top_removed_ids) if brief.top_removed_ids else '-'}")
 
 
+@snapshots_app.command("digest")
+def snapshots_digest(
+    view_names: List[str] = typer.Option([], "--view"),
+    top: int = typer.Option(5, "--top", min=1, max=50),
+    include_missing: bool = typer.Option(True, "--include-missing/--skip-missing"),
+) -> None:
+    container = _container()
+    digest = container.research_service.snapshot_diff_digest(
+        view_names=view_names or None,
+        top_items=top,
+        include_missing=include_missing,
+    )
+    typer.echo(digest.model_dump_json(indent=2))
+
+
+@snapshots_app.command("digest-export")
+def snapshots_digest_export(
+    view_names: List[str] = typer.Option([], "--view"),
+    top: int = typer.Option(5, "--top", min=1, max=50),
+    include_missing: bool = typer.Option(True, "--include-missing/--skip-missing"),
+) -> None:
+    container = _container()
+    paths = container.research_service.export_snapshot_diff_digest(
+        view_names=view_names or None,
+        top_items=top,
+        include_missing=include_missing,
+    )
+    typer.echo(json.dumps(paths, ensure_ascii=False, indent=2))
+
+
 @history_app.command("list")
 def history_list(
     item_type: Optional[str] = typer.Option(

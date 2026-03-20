@@ -3,7 +3,7 @@ from __future__ import annotations
 from app.models.artifact import ArtifactItem
 from app.models.query import AskResponse
 from app.models.report import BatchResearchResponse, ResearchResponse
-from app.models.snapshot import SnapshotDiffResponse, SnapshotEntry
+from app.models.snapshot import SnapshotDiffDigestResponse, SnapshotDiffResponse, SnapshotEntry
 from app.storage.file_store import FileStore
 
 
@@ -81,6 +81,20 @@ class ExportService:
             f"diff-{diff.from_snapshot_id[:8]}-{diff.to_snapshot_id[:8]}",
             diff.model_dump(mode="json"),
             prefix="snapshot-diff",
+        )
+        return {"markdown": str(md_path), "json": str(json_path)}
+
+    def export_snapshot_diff_digest(self, digest: SnapshotDiffDigestResponse) -> dict[str, str]:
+        markdown = self._build_snapshot_diff_digest_markdown(digest)
+        md_path = self.file_store.save_markdown(
+            "latest-diff-digest",
+            markdown,
+            prefix="snapshot-digest",
+        )
+        json_path = self.file_store.save_json(
+            "latest-diff-digest",
+            digest.model_dump(mode="json"),
+            prefix="snapshot-digest",
         )
         return {"markdown": str(md_path), "json": str(json_path)}
 
@@ -226,4 +240,31 @@ class ExportService:
         lines.append("")
         lines.append("## Common IDs")
         lines.extend([f"- {item}" for item in diff.common_ids] or ["- None"])
+        return "\n".join(lines)
+
+    def _build_snapshot_diff_digest_markdown(self, digest: SnapshotDiffDigestResponse) -> str:
+        lines = [
+            "# Snapshot Diff Digest",
+            "",
+            "## Overview",
+            f"- included_count: {digest.included_count}",
+            f"- skipped_count: {digest.skipped_count}",
+            f"- generated_for_views: {', '.join(digest.generated_for_views) if digest.generated_for_views else '-'}",
+            "",
+            "## Story-ready Briefs",
+        ]
+        if not digest.items:
+            lines.append("- No diff briefs available.")
+        for item in digest.items:
+            lines.append(f"### {item.view_name}")
+            lines.append(f"- {item.brief}")
+            lines.append(f"- top_added_ids: {', '.join(item.top_added_ids) if item.top_added_ids else '-'}")
+            lines.append(f"- top_removed_ids: {', '.join(item.top_removed_ids) if item.top_removed_ids else '-'}")
+            lines.append("")
+        lines.append("## Skipped Views")
+        if not digest.skipped:
+            lines.append("- None")
+        else:
+            for skipped in digest.skipped:
+                lines.append(f"- {skipped.view_name}: {skipped.reason}")
         return "\n".join(lines)

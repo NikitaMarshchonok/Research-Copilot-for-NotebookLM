@@ -19,6 +19,9 @@ from app.models.search_view import SearchViewCreateRequest, SearchViewEntry, Sea
 from app.models.snapshot import (
     SnapshotCreateRequest,
     SnapshotDiffBriefResponse,
+    SnapshotDiffDigestExportResponse,
+    SnapshotDiffDigestRequest,
+    SnapshotDiffDigestResponse,
     SnapshotDiffExportResponse,
     SnapshotDiffRequest,
     SnapshotDiffResponse,
@@ -225,6 +228,29 @@ def latest_snapshot_diff_brief(
         view_name=view_name,
         top_items=top_items,
     )
+
+
+@router.post("/snapshots/diff/digest", response_model=SnapshotDiffDigestResponse)
+def snapshot_diff_digest(
+    payload: SnapshotDiffDigestRequest, container: ServiceContainer = Depends(get_container)
+) -> SnapshotDiffDigestResponse:
+    return container.research_service.snapshot_diff_digest(
+        view_names=payload.view_names,
+        top_items=payload.top_items,
+        include_missing=payload.include_missing,
+    )
+
+
+@router.post("/snapshots/diff/digest/export", response_model=SnapshotDiffDigestExportResponse)
+def export_snapshot_diff_digest(
+    payload: SnapshotDiffDigestRequest, container: ServiceContainer = Depends(get_container)
+) -> SnapshotDiffDigestExportResponse:
+    paths = container.research_service.export_snapshot_diff_digest(
+        view_names=payload.view_names,
+        top_items=payload.top_items,
+        include_missing=payload.include_missing,
+    )
+    return SnapshotDiffDigestExportResponse(markdown=paths["markdown"], json_path=paths["json"])
 
 
 @router.get("/history", response_model=list[HistorySummary])

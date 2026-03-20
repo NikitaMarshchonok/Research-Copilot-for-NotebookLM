@@ -111,3 +111,20 @@ def test_snapshot_creation_and_changelog(tmp_path: Path) -> None:
     latest_brief = service.latest_snapshot_diff_brief(view_name="history-all", top_items=1)
     assert latest_brief.from_snapshot_id == first.id
     assert latest_brief.to_snapshot_id == second.id
+
+    digest = service.snapshot_diff_digest(view_names=["history-all"], top_items=1)
+    assert digest.included_count == 1
+    assert digest.skipped_count == 0
+    assert digest.items[0].view_name == "history-all"
+
+    digest_with_missing = service.snapshot_diff_digest(
+        view_names=["history-all", "unknown-view"],
+        top_items=1,
+        include_missing=True,
+    )
+    assert digest_with_missing.included_count == 1
+    assert digest_with_missing.skipped_count == 1
+
+    digest_export = service.export_snapshot_diff_digest(view_names=["history-all"], top_items=1)
+    assert "markdown" in digest_export
+    assert "json" in digest_export

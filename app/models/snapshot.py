@@ -75,3 +75,27 @@ class SnapshotDiffBriefResponse(BaseModel):
     common_count: int
     top_added_ids: list[str] = Field(default_factory=list)
     top_removed_ids: list[str] = Field(default_factory=list)
+
+
+class SnapshotDiffDigestRequest(BaseModel):
+    view_names: list[str] = Field(default_factory=list)
+    top_items: int = 5
+    include_missing: bool = True
+
+
+class SnapshotDiffDigestSkipped(BaseModel):
+    view_name: str
+    reason: str
+
+
+class SnapshotDiffDigestResponse(BaseModel):
+    generated_for_views: list[str] = Field(default_factory=list)
+    included_count: int
+    skipped_count: int
+    items: list[SnapshotDiffBriefResponse] = Field(default_factory=list)
+    skipped: list[SnapshotDiffDigestSkipped] = Field(default_factory=list)
+
+
+class SnapshotDiffDigestExportResponse(BaseModel):
+    markdown: str
+    json_path: str

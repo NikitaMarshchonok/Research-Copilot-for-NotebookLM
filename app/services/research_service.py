@@ -23,7 +23,12 @@ from app.services.search_view_service import SearchViewService
 from app.services.template_service import TemplateService
 from app.models.search_view import SearchViewCreateRequest, SearchViewEntry, SearchViewRunResponse
 from app.models.snapshot import SnapshotCreateRequest, SnapshotDelta, SnapshotEntry, SnapshotListItem
-from app.models.snapshot import SnapshotDiffBriefResponse, SnapshotDiffResponse
+from app.models.snapshot import (
+    SnapshotDiffBriefResponse,
+    SnapshotDiffDigestResponse,
+    SnapshotDiffDigestSkipped,
+    SnapshotDiffResponse,
+)
 from app.storage.json_store import JsonStore
 
 logger = logging.getLogger(__name__)
@@ -508,6 +513,42 @@ class ResearchService:
             to_snapshot_id=latest_diff.to_snapshot_id,
             top_items=top_items,
         )
+
+    def snapshot_diff_digest(
+        self, view_names: list[str] | None = None, top_items: int = 5, include_missing: bool = True
+    ) -> SnapshotDiffDigestResponse:
+        if view_names:
+            target_views = view_names
+        else:
+            target_views = [view.name for view in self.list_search_views()]
+
+        items: list[SnapshotDiffBriefResponse] = []
+        skipped: list[SnapshotDiffDigestSkipped] = []
+
+        for view_name in target_views:
+            try:
+                items.append(self.latest_snapshot_diff_brief(view_name=view_name, top_items=top_items))
+            except NotFoundError as exc:
+                if include_missing:
+                    skipped.append(SnapshotDiffDigestSkipped(view_name=view_name, reason=str(exc)))
+
+        return SnapshotDiffDigestResponse(
+            generated_for_views=target_views,
+            included_count=len(items),
+            skipped_count=len(skipped),
+            items=items,
+            skipped=skipped,
+        )
+
+    def export_snapshot_diff_digest(
+        self, view_names: list[str] | None = None, top_items: int = 5, include_missing: bool = True
+    ) -> dict[str, str]:
+        digest = self.snapshot_diff_digest(
+            view_names=view_names,
+            top_items=top_items,
+            include_missing=include_missing,
+        )
+        return self.export_service.export_snapshot_diff_digest(digest)
 
     def _get_latest_snapshot_for_view(self, view_name: str) -> SnapshotEntry | None:
         snapshots = self.list_snapshots(view_name=view_name)
