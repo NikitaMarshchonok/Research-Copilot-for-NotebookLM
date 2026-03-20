@@ -425,6 +425,24 @@ class ResearchService:
 
         source_ids = {str(item.get("id", "")) for item in source.items}
         target_ids = {str(item.get("id", "")) for item in target.items}
+        added_ids = sorted(target_ids - source_ids)
+        removed_ids = sorted(source_ids - target_ids)
+        common_ids = sorted(source_ids & target_ids)
+        net_change = target.item_count - source.item_count
+        churn = len(added_ids) + len(removed_ids)
+        source_count = max(source.item_count, 1)
+        target_count = max(target.item_count, 1)
+        summary = {
+            "from_count": source.item_count,
+            "to_count": target.item_count,
+            "net_change": net_change,
+            "added_count": len(added_ids),
+            "removed_count": len(removed_ids),
+            "common_count": len(common_ids),
+            "change_ratio_from": round(churn / source_count, 4),
+            "retention_ratio_from": round(len(common_ids) / source_count, 4),
+            "retention_ratio_to": round(len(common_ids) / target_count, 4),
+        }
 
         return SnapshotDiffResponse(
             from_snapshot_id=source.id,
@@ -433,9 +451,10 @@ class ResearchService:
             to_view_name=target.view_name,
             from_item_count=source.item_count,
             to_item_count=target.item_count,
-            added_ids=sorted(target_ids - source_ids),
-            removed_ids=sorted(source_ids - target_ids),
-            common_ids=sorted(source_ids & target_ids),
+            added_ids=added_ids,
+            removed_ids=removed_ids,
+            common_ids=common_ids,
+            summary=summary,
         )
 
     def export_snapshot_diff(self, from_snapshot_id: str, to_snapshot_id: str) -> dict[str, str]:

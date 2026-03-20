@@ -190,8 +190,19 @@ class ExportService:
         return "\n".join(lines)
 
     def _build_snapshot_diff_markdown(self, diff: SnapshotDiffResponse) -> str:
+        summary = diff.summary
+        net_change = int(summary.get("net_change", diff.to_item_count - diff.from_item_count))
+        change_ratio = float(summary.get("change_ratio_from", 0.0))
+        retention_from = float(summary.get("retention_ratio_from", 0.0))
+        retention_to = float(summary.get("retention_ratio_to", 0.0))
         lines = [
             "# Snapshot Diff Report",
+            "",
+            "## Executive Summary",
+            f"- net_change: {net_change:+d} items ({diff.from_item_count} -> {diff.to_item_count})",
+            f"- churn_ratio_from: {change_ratio:.2%}",
+            f"- retention_ratio_from: {retention_from:.2%}",
+            f"- retention_ratio_to: {retention_to:.2%}",
             "",
             "## Metadata",
             f"- from_snapshot_id: `{diff.from_snapshot_id}`",

@@ -57,6 +57,7 @@ class SnapshotDiffResponse(BaseModel):
     added_ids: list[str] = Field(default_factory=list)
     removed_ids: list[str] = Field(default_factory=list)
     common_ids: list[str] = Field(default_factory=list)
+    summary: dict[str, float | int] = Field(default_factory=dict)
 
 
 class SnapshotDiffExportResponse(BaseModel):

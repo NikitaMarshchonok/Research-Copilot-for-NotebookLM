@@ -86,6 +86,10 @@ def test_snapshot_creation_and_changelog(tmp_path: Path) -> None:
     diff = service.diff_snapshots(first.id, second.id)
     assert "r2" in diff.added_ids
     assert "a1" in diff.removed_ids
+    assert diff.summary["net_change"] == 0
+    assert diff.summary["added_count"] == 1
+    assert diff.summary["removed_count"] == 1
+    assert diff.summary["common_count"] == 1
 
     exported = service.export_snapshot_diff(first.id, second.id)
     assert "markdown" in exported

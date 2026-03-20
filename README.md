@@ -273,6 +273,7 @@ It supports:
 - saved search views per workspace
 - materialized snapshots from saved views
 - snapshot diff reports between two snapshots
+- executive diff summary (net change/churn/retention) for article/TZ notes
 
 Optional API URL override for UI:
 
