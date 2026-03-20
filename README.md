@@ -196,6 +196,8 @@ python -m app.cli snapshots diff --from <SNAPSHOT_ID_A> --to <SNAPSHOT_ID_B>
 python -m app.cli snapshots diff-export --from <SNAPSHOT_ID_A> --to <SNAPSHOT_ID_B>
 python -m app.cli snapshots diff-latest --view deep-research
 python -m app.cli snapshots diff-latest-export --view deep-research
+python -m app.cli snapshots diff-brief --from <SNAPSHOT_ID_A> --to <SNAPSHOT_ID_B> --top 5
+python -m app.cli snapshots diff-latest-brief --view deep-research --top 5
 ```
 
 Artifacts are written into `outputs/`.
@@ -245,6 +247,8 @@ Endpoints:
 - `POST /snapshots/diff/export`
 - `GET /snapshots/diff/latest?view_name=...`
 - `POST /snapshots/diff/latest/export?view_name=...`
+- `POST /snapshots/diff/brief?top_items=5`
+- `GET /snapshots/diff/latest/brief?view_name=...&top_items=5`
 - `POST /export` (alias: `POST /exports`)
 
 Open docs: <http://127.0.0.1:8000/docs>
@@ -274,6 +278,7 @@ It supports:
 - materialized snapshots from saved views
 - snapshot diff reports between two snapshots
 - executive diff summary (net change/churn/retention) for article/TZ notes
+- story-ready diff brief (1-line narrative + top changed IDs)
 
 Optional API URL override for UI:
 

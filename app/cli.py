@@ -391,6 +391,38 @@ def snapshots_diff_latest_export(view_name: str = typer.Option(..., "--view")) -
     typer.echo(json.dumps(paths, ensure_ascii=False, indent=2))
 
 
+@snapshots_app.command("diff-brief")
+def snapshots_diff_brief(
+    from_snapshot_id: str = typer.Option(..., "--from"),
+    to_snapshot_id: str = typer.Option(..., "--to"),
+    top: int = typer.Option(5, "--top", min=1, max=50),
+) -> None:
+    container = _container()
+    brief = container.research_service.snapshot_diff_brief(
+        from_snapshot_id=from_snapshot_id,
+        to_snapshot_id=to_snapshot_id,
+        top_items=top,
+    )
+    typer.echo(brief.brief)
+    typer.echo(f"Top added: {', '.join(brief.top_added_ids) if brief.top_added_ids else '-'}")
+    typer.echo(f"Top removed: {', '.join(brief.top_removed_ids) if brief.top_removed_ids else '-'}")
+
+
+@snapshots_app.command("diff-latest-brief")
+def snapshots_diff_latest_brief(
+    view_name: str = typer.Option(..., "--view"),
+    top: int = typer.Option(5, "--top", min=1, max=50),
+) -> None:
+    container = _container()
+    brief = container.research_service.latest_snapshot_diff_brief(
+        view_name=view_name,
+        top_items=top,
+    )
+    typer.echo(brief.brief)
+    typer.echo(f"Top added: {', '.join(brief.top_added_ids) if brief.top_added_ids else '-'}")
+    typer.echo(f"Top removed: {', '.join(brief.top_removed_ids) if brief.top_removed_ids else '-'}")
+
+
 @history_app.command("list")
 def history_list(
     item_type: Optional[str] = typer.Option(

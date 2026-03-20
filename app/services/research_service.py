@@ -23,7 +23,7 @@ from app.services.search_view_service import SearchViewService
 from app.services.template_service import TemplateService
 from app.models.search_view import SearchViewCreateRequest, SearchViewEntry, SearchViewRunResponse
 from app.models.snapshot import SnapshotCreateRequest, SnapshotDelta, SnapshotEntry, SnapshotListItem
-from app.models.snapshot import SnapshotDiffResponse
+from app.models.snapshot import SnapshotDiffBriefResponse, SnapshotDiffResponse
 from app.storage.json_store import JsonStore
 
 logger = logging.getLogger(__name__)
@@ -474,6 +474,40 @@ class ResearchService:
     def export_latest_snapshot_diff(self, view_name: str) -> dict[str, str]:
         diff = self.diff_latest_snapshots(view_name=view_name)
         return self.export_service.export_snapshot_diff(diff)
+
+    def snapshot_diff_brief(
+        self, from_snapshot_id: str, to_snapshot_id: str, top_items: int = 5
+    ) -> SnapshotDiffBriefResponse:
+        diff = self.diff_snapshots(from_snapshot_id, to_snapshot_id)
+        top_limit = max(top_items, 1)
+        net_change = int(diff.summary.get("net_change", 0))
+        churn_ratio = float(diff.summary.get("change_ratio_from", 0.0))
+        retention = float(diff.summary.get("retention_ratio_to", 0.0))
+        direction = "grew" if net_change > 0 else "shrunk" if net_change < 0 else "stayed flat"
+        brief = (
+            f"View '{diff.to_view_name}' {direction}: {diff.from_item_count} -> {diff.to_item_count} "
+            f"(net {net_change:+d}), churn {churn_ratio:.1%}, retention {retention:.1%}; "
+            f"added {len(diff.added_ids)}, removed {len(diff.removed_ids)}."
+        )
+        return SnapshotDiffBriefResponse(
+            from_snapshot_id=diff.from_snapshot_id,
+            to_snapshot_id=diff.to_snapshot_id,
+            view_name=diff.to_view_name,
+            brief=brief,
+            added_count=len(diff.added_ids),
+            removed_count=len(diff.removed_ids),
+            common_count=len(diff.common_ids),
+            top_added_ids=diff.added_ids[:top_limit],
+            top_removed_ids=diff.removed_ids[:top_limit],
+        )
+
+    def latest_snapshot_diff_brief(self, view_name: str, top_items: int = 5) -> SnapshotDiffBriefResponse:
+        latest_diff = self.diff_latest_snapshots(view_name=view_name)
+        return self.snapshot_diff_brief(
+            from_snapshot_id=latest_diff.from_snapshot_id,
+            to_snapshot_id=latest_diff.to_snapshot_id,
+            top_items=top_items,
+        )
 
     def _get_latest_snapshot_for_view(self, view_name: str) -> SnapshotEntry | None:
         snapshots = self.list_snapshots(view_name=view_name)

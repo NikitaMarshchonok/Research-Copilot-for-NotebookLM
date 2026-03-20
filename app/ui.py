@@ -362,6 +362,16 @@ if search_view_map:
                 st.json(latest_diff)
             except requests.RequestException as exc:
                 st.error(f"Latest snapshot diff failed: {exc}")
+        if st.button("Brief Latest 2 Snapshots (View)"):
+            try:
+                latest_brief = api_get(
+                    "/snapshots/diff/latest/brief",
+                    params={"view_name": snapshot_view_name, "top_items": 5},
+                )
+                st.text(latest_brief.get("brief", ""))
+                st.json(latest_brief)
+            except requests.RequestException as exc:
+                st.error(f"Latest snapshot brief failed: {exc}")
     with latest_snapshot_diff_col_2:
         if st.button("Export Latest Snapshot Diff (View)"):
             try:
@@ -410,6 +420,26 @@ with diff_action_col_1:
                 st.json(diff)
             except requests.RequestException as exc:
                 st.error(f"Snapshot diff failed: {exc}")
+    if st.button("Generate Diff Brief"):
+        if not from_snapshot_id.strip() or not to_snapshot_id.strip():
+            st.error("Provide both from/to snapshot ids.")
+        else:
+            try:
+                response = requests.post(
+                    f"{API_BASE}/snapshots/diff/brief",
+                    params={"top_items": 5},
+                    json={
+                        "from_snapshot_id": from_snapshot_id.strip(),
+                        "to_snapshot_id": to_snapshot_id.strip(),
+                    },
+                    timeout=60,
+                )
+                response.raise_for_status()
+                brief = response.json()
+                st.text(brief.get("brief", ""))
+                st.json(brief)
+            except requests.RequestException as exc:
+                st.error(f"Snapshot diff brief failed: {exc}")
 
 with diff_action_col_2:
     if st.button("Export Snapshot Diff"):

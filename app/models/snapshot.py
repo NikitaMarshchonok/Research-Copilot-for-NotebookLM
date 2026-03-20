@@ -63,3 +63,15 @@ class SnapshotDiffResponse(BaseModel):
 class SnapshotDiffExportResponse(BaseModel):
     markdown: str
     json_path: str
+
+
+class SnapshotDiffBriefResponse(BaseModel):
+    from_snapshot_id: str
+    to_snapshot_id: str
+    view_name: str
+    brief: str
+    added_count: int
+    removed_count: int
+    common_count: int
+    top_added_ids: list[str] = Field(default_factory=list)
+    top_removed_ids: list[str] = Field(default_factory=list)

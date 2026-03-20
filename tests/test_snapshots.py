@@ -102,3 +102,12 @@ def test_snapshot_creation_and_changelog(tmp_path: Path) -> None:
     latest_export = service.export_latest_snapshot_diff(view_name="history-all")
     assert "markdown" in latest_export
     assert "json" in latest_export
+
+    brief = service.snapshot_diff_brief(first.id, second.id, top_items=1)
+    assert "history-all" in brief.brief
+    assert len(brief.top_added_ids) <= 1
+    assert len(brief.top_removed_ids) <= 1
+
+    latest_brief = service.latest_snapshot_diff_brief(view_name="history-all", top_items=1)
+    assert latest_brief.from_snapshot_id == first.id
+    assert latest_brief.to_snapshot_id == second.id

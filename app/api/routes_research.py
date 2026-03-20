@@ -18,6 +18,7 @@ from app.models.report import BatchResearchResponse, ResearchRequest, ResearchRe
 from app.models.search_view import SearchViewCreateRequest, SearchViewEntry, SearchViewRunResponse
 from app.models.snapshot import (
     SnapshotCreateRequest,
+    SnapshotDiffBriefResponse,
     SnapshotDiffExportResponse,
     SnapshotDiffRequest,
     SnapshotDiffResponse,
@@ -199,6 +200,31 @@ def export_latest_snapshot_diff(
 ) -> SnapshotDiffExportResponse:
     paths = container.research_service.export_latest_snapshot_diff(view_name=view_name)
     return SnapshotDiffExportResponse(markdown=paths["markdown"], json_path=paths["json"])
+
+
+@router.post("/snapshots/diff/brief", response_model=SnapshotDiffBriefResponse)
+def snapshot_diff_brief(
+    payload: SnapshotDiffRequest,
+    top_items: int = Query(default=5, ge=1, le=50),
+    container: ServiceContainer = Depends(get_container),
+) -> SnapshotDiffBriefResponse:
+    return container.research_service.snapshot_diff_brief(
+        from_snapshot_id=payload.from_snapshot_id,
+        to_snapshot_id=payload.to_snapshot_id,
+        top_items=top_items,
+    )
+
+
+@router.get("/snapshots/diff/latest/brief", response_model=SnapshotDiffBriefResponse)
+def latest_snapshot_diff_brief(
+    view_name: str = Query(..., description="Saved view name"),
+    top_items: int = Query(default=5, ge=1, le=50),
+    container: ServiceContainer = Depends(get_container),
+) -> SnapshotDiffBriefResponse:
+    return container.research_service.latest_snapshot_diff_brief(
+        view_name=view_name,
+        top_items=top_items,
+    )
 
 
 @router.get("/history", response_model=list[HistorySummary])
