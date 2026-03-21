@@ -124,3 +124,20 @@ class SnapshotTrendRequest(BaseModel):
 class SnapshotTrendExportResponse(BaseModel):
     markdown: str
     json_path: str
+
+
+class SnapshotUpdatePackRequest(BaseModel):
+    view_name: str
+    top_items: int = 5
+    trend_limit: int = 8
+
+
+class SnapshotUpdatePackResponse(BaseModel):
+    view_name: str
+    latest_diff_brief: SnapshotDiffBriefResponse
+    trend: SnapshotTrendResponse
+
+
+class SnapshotUpdatePackExportResponse(BaseModel):
+    markdown: str
+    json_path: str

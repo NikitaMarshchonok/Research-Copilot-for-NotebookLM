@@ -535,6 +535,50 @@ with trend_col_2:
             except requests.RequestException as exc:
                 st.error(f"Snapshot trend export failed: {exc}")
 
+st.subheader("Snapshot Update Pack")
+pack_view_name = st.text_input(
+    "Update pack view name",
+    value=(sorted(search_view_map.keys())[0] if search_view_map else ""),
+    key="snapshot_update_pack_view_name",
+)
+pack_top = st.slider("Update pack top changed IDs", min_value=1, max_value=20, value=5, step=1)
+pack_trend_limit = st.slider("Update pack trend limit", min_value=2, max_value=20, value=8, step=1)
+pack_col_1, pack_col_2 = st.columns(2)
+with pack_col_1:
+    if st.button("Generate Snapshot Update Pack"):
+        if not pack_view_name.strip():
+            st.error("Provide a view name for update pack.")
+        else:
+            try:
+                pack = api_post(
+                    "/snapshots/update-pack",
+                    {
+                        "view_name": pack_view_name.strip(),
+                        "top_items": pack_top,
+                        "trend_limit": pack_trend_limit,
+                    },
+                )
+                st.json(pack)
+            except requests.RequestException as exc:
+                st.error(f"Snapshot update pack failed: {exc}")
+with pack_col_2:
+    if st.button("Export Snapshot Update Pack"):
+        if not pack_view_name.strip():
+            st.error("Provide a view name for update pack.")
+        else:
+            try:
+                pack_export = api_post(
+                    "/snapshots/update-pack/export",
+                    {
+                        "view_name": pack_view_name.strip(),
+                        "top_items": pack_top,
+                        "trend_limit": pack_trend_limit,
+                    },
+                )
+                st.json(pack_export)
+            except requests.RequestException as exc:
+                st.error(f"Snapshot update pack export failed: {exc}")
+
 st.subheader("Artifacts Index")
 artifact_filter = st.selectbox(
     "Artifact type filter",

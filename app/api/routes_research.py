@@ -30,6 +30,9 @@ from app.models.snapshot import (
     SnapshotTrendExportResponse,
     SnapshotTrendRequest,
     SnapshotTrendResponse,
+    SnapshotUpdatePackExportResponse,
+    SnapshotUpdatePackRequest,
+    SnapshotUpdatePackResponse,
 )
 from app.models.template import (
     RunBatchTemplateRequest,
@@ -275,6 +278,29 @@ def export_snapshot_trend(
         limit=payload.limit,
     )
     return SnapshotTrendExportResponse(markdown=paths["markdown"], json_path=paths["json"])
+
+
+@router.post("/snapshots/update-pack", response_model=SnapshotUpdatePackResponse)
+def snapshot_update_pack(
+    payload: SnapshotUpdatePackRequest, container: ServiceContainer = Depends(get_container)
+) -> SnapshotUpdatePackResponse:
+    return container.research_service.snapshot_update_pack(
+        view_name=payload.view_name,
+        top_items=payload.top_items,
+        trend_limit=payload.trend_limit,
+    )
+
+
+@router.post("/snapshots/update-pack/export", response_model=SnapshotUpdatePackExportResponse)
+def export_snapshot_update_pack(
+    payload: SnapshotUpdatePackRequest, container: ServiceContainer = Depends(get_container)
+) -> SnapshotUpdatePackExportResponse:
+    paths = container.research_service.export_snapshot_update_pack(
+        view_name=payload.view_name,
+        top_items=payload.top_items,
+        trend_limit=payload.trend_limit,
+    )
+    return SnapshotUpdatePackExportResponse(markdown=paths["markdown"], json_path=paths["json"])
 
 
 @router.get("/history", response_model=list[HistorySummary])

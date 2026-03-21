@@ -8,6 +8,7 @@ from app.models.snapshot import (
     SnapshotDiffResponse,
     SnapshotEntry,
     SnapshotTrendResponse,
+    SnapshotUpdatePackResponse,
 )
 from app.storage.file_store import FileStore
 
@@ -114,6 +115,20 @@ class ExportService:
             f"{trend.view_name}-trend",
             trend.model_dump(mode="json"),
             prefix="snapshot-trend",
+        )
+        return {"markdown": str(md_path), "json": str(json_path)}
+
+    def export_snapshot_update_pack(self, pack: SnapshotUpdatePackResponse) -> dict[str, str]:
+        markdown = self._build_snapshot_update_pack_markdown(pack)
+        md_path = self.file_store.save_markdown(
+            f"{pack.view_name}-update-pack",
+            markdown,
+            prefix="snapshot-update-pack",
+        )
+        json_path = self.file_store.save_json(
+            f"{pack.view_name}-update-pack",
+            pack.model_dump(mode="json"),
+            prefix="snapshot-update-pack",
         )
         return {"markdown": str(md_path), "json": str(json_path)}
 
@@ -313,4 +328,35 @@ class ExportService:
                 f"{point.added_count_from_previous} | {point.removed_count_from_previous} | "
                 f"{point.net_change_from_previous:+d} |"
             )
+        return "\n".join(lines)
+
+    def _build_snapshot_update_pack_markdown(self, pack: SnapshotUpdatePackResponse) -> str:
+        brief = pack.latest_diff_brief
+        lines = [
+            "# Snapshot Update Pack",
+            "",
+            "## Metadata",
+            f"- view_name: `{pack.view_name}`",
+            f"- latest_from_snapshot: `{brief.from_snapshot_id}`",
+            f"- latest_to_snapshot: `{brief.to_snapshot_id}`",
+            "",
+            "## Story-ready Brief",
+            f"- {brief.brief}",
+            f"- top_added_ids: {', '.join(brief.top_added_ids) if brief.top_added_ids else '-'}",
+            f"- top_removed_ids: {', '.join(brief.top_removed_ids) if brief.top_removed_ids else '-'}",
+            "",
+            "## Trend Timeline",
+            "",
+            "| created_at | snapshot_id | item_count | added | removed | net |",
+            "|---|---|---:|---:|---:|---:|",
+        ]
+        ordered = sorted(pack.trend.points, key=lambda point: point.created_at)
+        for point in ordered:
+            lines.append(
+                f"| {point.created_at.isoformat()} | `{point.snapshot_id}` | {point.item_count} | "
+                f"{point.added_count_from_previous} | {point.removed_count_from_previous} | "
+                f"{point.net_change_from_previous:+d} |"
+            )
+        if not ordered:
+            lines.append("| - | - | 0 | 0 | 0 | 0 |")
         return "\n".join(lines)

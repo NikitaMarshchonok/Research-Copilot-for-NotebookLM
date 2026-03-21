@@ -150,3 +150,16 @@ def test_snapshot_creation_and_changelog(tmp_path: Path) -> None:
     trend_export = service.export_snapshot_trend(view_name="history-all", limit=5)
     assert "markdown" in trend_export
     assert "json" in trend_export
+
+    update_pack = service.snapshot_update_pack(view_name="history-all", top_items=2, trend_limit=5)
+    assert update_pack.view_name == "history-all"
+    assert update_pack.latest_diff_brief.view_name == "history-all"
+    assert len(update_pack.trend.points) >= 2
+
+    update_pack_export = service.export_snapshot_update_pack(
+        view_name="history-all",
+        top_items=2,
+        trend_limit=5,
+    )
+    assert "markdown" in update_pack_export
+    assert "json" in update_pack_export

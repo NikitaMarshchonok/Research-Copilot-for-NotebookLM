@@ -473,6 +473,36 @@ def snapshots_trend_export(
     typer.echo(json.dumps(paths, ensure_ascii=False, indent=2))
 
 
+@snapshots_app.command("update-pack")
+def snapshots_update_pack(
+    view_name: str = typer.Option(..., "--view"),
+    top: int = typer.Option(5, "--top", min=1, max=50),
+    trend_limit: int = typer.Option(8, "--trend-limit", min=2, max=100),
+) -> None:
+    container = _container()
+    pack = container.research_service.snapshot_update_pack(
+        view_name=view_name,
+        top_items=top,
+        trend_limit=trend_limit,
+    )
+    typer.echo(pack.model_dump_json(indent=2))
+
+
+@snapshots_app.command("update-pack-export")
+def snapshots_update_pack_export(
+    view_name: str = typer.Option(..., "--view"),
+    top: int = typer.Option(5, "--top", min=1, max=50),
+    trend_limit: int = typer.Option(8, "--trend-limit", min=2, max=100),
+) -> None:
+    container = _container()
+    paths = container.research_service.export_snapshot_update_pack(
+        view_name=view_name,
+        top_items=top,
+        trend_limit=trend_limit,
+    )
+    typer.echo(json.dumps(paths, ensure_ascii=False, indent=2))
+
+
 @history_app.command("list")
 def history_list(
     item_type: Optional[str] = typer.Option(

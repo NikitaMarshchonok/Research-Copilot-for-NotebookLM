@@ -202,6 +202,8 @@ python -m app.cli snapshots digest --view deep-research --view article-research 
 python -m app.cli snapshots digest-export --view deep-research --top 5 --include-missing
 python -m app.cli snapshots trend --view deep-research --limit 8
 python -m app.cli snapshots trend-export --view deep-research --limit 8
+python -m app.cli snapshots update-pack --view deep-research --top 5 --trend-limit 8
+python -m app.cli snapshots update-pack-export --view deep-research --top 5 --trend-limit 8
 ```
 
 Artifacts are written into `outputs/`.
@@ -257,6 +259,8 @@ Endpoints:
 - `POST /snapshots/diff/digest/export`
 - `POST /snapshots/trend`
 - `POST /snapshots/trend/export`
+- `POST /snapshots/update-pack`
+- `POST /snapshots/update-pack/export`
 - `POST /export` (alias: `POST /exports`)
 
 Open docs: <http://127.0.0.1:8000/docs>
@@ -289,6 +293,7 @@ It supports:
 - story-ready diff brief (1-line narrative + top changed IDs)
 - weekly-style multi-view diff digest for research updates
 - per-view trend timeline across last N snapshots
+- one-shot update pack (latest brief + trend) per view
 
 Optional API URL override for UI:
 
@@ -356,6 +361,8 @@ NOTEBOOKLM_MCP_ASK_TOOL=<exact_tool_name_from_mcp_server>
 
 ```bash
 pytest
+pytest tests/test_snapshot_e2e_smoke.py -q
+make test-snapshots-smoke
 ```
 
 ## Security notes

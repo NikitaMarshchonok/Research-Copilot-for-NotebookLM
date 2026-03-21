@@ -30,6 +30,7 @@ from app.models.snapshot import (
     SnapshotDiffResponse,
     SnapshotTrendPoint,
     SnapshotTrendResponse,
+    SnapshotUpdatePackResponse,
 )
 from app.storage.json_store import JsonStore
 
@@ -601,6 +602,27 @@ class ResearchService:
     def export_snapshot_trend(self, view_name: str, limit: int = 5) -> dict[str, str]:
         trend = self.snapshot_trend(view_name=view_name, limit=limit)
         return self.export_service.export_snapshot_trend(trend)
+
+    def snapshot_update_pack(
+        self, view_name: str, top_items: int = 5, trend_limit: int = 8
+    ) -> SnapshotUpdatePackResponse:
+        latest_brief = self.latest_snapshot_diff_brief(view_name=view_name, top_items=top_items)
+        trend = self.snapshot_trend(view_name=view_name, limit=trend_limit)
+        return SnapshotUpdatePackResponse(
+            view_name=view_name,
+            latest_diff_brief=latest_brief,
+            trend=trend,
+        )
+
+    def export_snapshot_update_pack(
+        self, view_name: str, top_items: int = 5, trend_limit: int = 8
+    ) -> dict[str, str]:
+        pack = self.snapshot_update_pack(
+            view_name=view_name,
+            top_items=top_items,
+            trend_limit=trend_limit,
+        )
+        return self.export_service.export_snapshot_update_pack(pack)
 
     def _get_latest_snapshot_for_view(self, view_name: str) -> SnapshotEntry | None:
         snapshots = self.list_snapshots(view_name=view_name)
