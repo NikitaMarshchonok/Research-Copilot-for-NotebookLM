@@ -27,6 +27,9 @@ from app.models.snapshot import (
     SnapshotDiffResponse,
     SnapshotEntry,
     SnapshotListItem,
+    SnapshotTrendExportResponse,
+    SnapshotTrendRequest,
+    SnapshotTrendResponse,
 )
 from app.models.template import (
     RunBatchTemplateRequest,
@@ -251,6 +254,27 @@ def export_snapshot_diff_digest(
         include_missing=payload.include_missing,
     )
     return SnapshotDiffDigestExportResponse(markdown=paths["markdown"], json_path=paths["json"])
+
+
+@router.post("/snapshots/trend", response_model=SnapshotTrendResponse)
+def snapshot_trend(
+    payload: SnapshotTrendRequest, container: ServiceContainer = Depends(get_container)
+) -> SnapshotTrendResponse:
+    return container.research_service.snapshot_trend(
+        view_name=payload.view_name,
+        limit=payload.limit,
+    )
+
+
+@router.post("/snapshots/trend/export", response_model=SnapshotTrendExportResponse)
+def export_snapshot_trend(
+    payload: SnapshotTrendRequest, container: ServiceContainer = Depends(get_container)
+) -> SnapshotTrendExportResponse:
+    paths = container.research_service.export_snapshot_trend(
+        view_name=payload.view_name,
+        limit=payload.limit,
+    )
+    return SnapshotTrendExportResponse(markdown=paths["markdown"], json_path=paths["json"])
 
 
 @router.get("/history", response_model=list[HistorySummary])

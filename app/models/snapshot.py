@@ -99,3 +99,28 @@ class SnapshotDiffDigestResponse(BaseModel):
 class SnapshotDiffDigestExportResponse(BaseModel):
     markdown: str
     json_path: str
+
+
+class SnapshotTrendPoint(BaseModel):
+    snapshot_id: str
+    created_at: datetime
+    item_count: int
+    added_count_from_previous: int
+    removed_count_from_previous: int
+    net_change_from_previous: int
+
+
+class SnapshotTrendResponse(BaseModel):
+    view_name: str
+    compared_pairs: int
+    points: list[SnapshotTrendPoint] = Field(default_factory=list)
+
+
+class SnapshotTrendRequest(BaseModel):
+    view_name: str
+    limit: int = 5
+
+
+class SnapshotTrendExportResponse(BaseModel):
+    markdown: str
+    json_path: str

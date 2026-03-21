@@ -3,7 +3,12 @@ from __future__ import annotations
 from app.models.artifact import ArtifactItem
 from app.models.query import AskResponse
 from app.models.report import BatchResearchResponse, ResearchResponse
-from app.models.snapshot import SnapshotDiffDigestResponse, SnapshotDiffResponse, SnapshotEntry
+from app.models.snapshot import (
+    SnapshotDiffDigestResponse,
+    SnapshotDiffResponse,
+    SnapshotEntry,
+    SnapshotTrendResponse,
+)
 from app.storage.file_store import FileStore
 
 
@@ -95,6 +100,20 @@ class ExportService:
             "latest-diff-digest",
             digest.model_dump(mode="json"),
             prefix="snapshot-digest",
+        )
+        return {"markdown": str(md_path), "json": str(json_path)}
+
+    def export_snapshot_trend(self, trend: SnapshotTrendResponse) -> dict[str, str]:
+        markdown = self._build_snapshot_trend_markdown(trend)
+        md_path = self.file_store.save_markdown(
+            f"{trend.view_name}-trend",
+            markdown,
+            prefix="snapshot-trend",
+        )
+        json_path = self.file_store.save_json(
+            f"{trend.view_name}-trend",
+            trend.model_dump(mode="json"),
+            prefix="snapshot-trend",
         )
         return {"markdown": str(md_path), "json": str(json_path)}
 
@@ -267,4 +286,31 @@ class ExportService:
         else:
             for skipped in digest.skipped:
                 lines.append(f"- {skipped.view_name}: {skipped.reason}")
+        return "\n".join(lines)
+
+    def _build_snapshot_trend_markdown(self, trend: SnapshotTrendResponse) -> str:
+        lines = [
+            "# Snapshot Trend Report",
+            "",
+            "## Metadata",
+            f"- view_name: `{trend.view_name}`",
+            f"- compared_pairs: {trend.compared_pairs}",
+            f"- points: {len(trend.points)}",
+            "",
+            "## Timeline",
+            "",
+            "| created_at | snapshot_id | item_count | added | removed | net |",
+            "|---|---|---:|---:|---:|---:|",
+        ]
+        if not trend.points:
+            lines.append("| - | - | 0 | 0 | 0 | 0 |")
+            return "\n".join(lines)
+
+        ordered = sorted(trend.points, key=lambda point: point.created_at)
+        for point in ordered:
+            lines.append(
+                f"| {point.created_at.isoformat()} | `{point.snapshot_id}` | {point.item_count} | "
+                f"{point.added_count_from_previous} | {point.removed_count_from_previous} | "
+                f"{point.net_change_from_previous:+d} |"
+            )
         return "\n".join(lines)

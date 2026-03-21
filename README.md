@@ -200,6 +200,8 @@ python -m app.cli snapshots diff-brief --from <SNAPSHOT_ID_A> --to <SNAPSHOT_ID_
 python -m app.cli snapshots diff-latest-brief --view deep-research --top 5
 python -m app.cli snapshots digest --view deep-research --view article-research --top 5
 python -m app.cli snapshots digest-export --view deep-research --top 5 --include-missing
+python -m app.cli snapshots trend --view deep-research --limit 8
+python -m app.cli snapshots trend-export --view deep-research --limit 8
 ```
 
 Artifacts are written into `outputs/`.
@@ -253,6 +255,8 @@ Endpoints:
 - `GET /snapshots/diff/latest/brief?view_name=...&top_items=5`
 - `POST /snapshots/diff/digest`
 - `POST /snapshots/diff/digest/export`
+- `POST /snapshots/trend`
+- `POST /snapshots/trend/export`
 - `POST /export` (alias: `POST /exports`)
 
 Open docs: <http://127.0.0.1:8000/docs>
@@ -284,6 +288,7 @@ It supports:
 - executive diff summary (net change/churn/retention) for article/TZ notes
 - story-ready diff brief (1-line narrative + top changed IDs)
 - weekly-style multi-view diff digest for research updates
+- per-view trend timeline across last N snapshots
 
 Optional API URL override for UI:
 

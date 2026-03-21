@@ -128,3 +128,25 @@ def test_snapshot_creation_and_changelog(tmp_path: Path) -> None:
     digest_export = service.export_snapshot_diff_digest(view_names=["history-all"], top_items=1)
     assert "markdown" in digest_export
     assert "json" in digest_export
+
+    history_store.write(
+        {
+            "items": [
+                {"type": "research", "payload": {"id": "r1", "topic": "t1"}},
+                {"type": "research", "payload": {"id": "r2", "topic": "t2"}},
+                {"type": "research", "payload": {"id": "r3", "topic": "t3"}},
+            ]
+        }
+    )
+    third = service.create_snapshot(SnapshotCreateRequest(view_name="history-all"))
+    assert third.item_count == 3
+
+    trend = service.snapshot_trend(view_name="history-all", limit=5)
+    assert trend.view_name == "history-all"
+    assert trend.compared_pairs == 2
+    assert len(trend.points) == 3
+    assert trend.points[-1].added_count_from_previous >= 1
+
+    trend_export = service.export_snapshot_trend(view_name="history-all", limit=5)
+    assert "markdown" in trend_export
+    assert "json" in trend_export

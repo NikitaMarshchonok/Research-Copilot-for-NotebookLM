@@ -28,6 +28,8 @@ from app.models.snapshot import (
     SnapshotDiffDigestResponse,
     SnapshotDiffDigestSkipped,
     SnapshotDiffResponse,
+    SnapshotTrendPoint,
+    SnapshotTrendResponse,
 )
 from app.storage.json_store import JsonStore
 
@@ -549,6 +551,56 @@ class ResearchService:
             include_missing=include_missing,
         )
         return self.export_service.export_snapshot_diff_digest(digest)
+
+    def snapshot_trend(self, view_name: str, limit: int = 5) -> SnapshotTrendResponse:
+        safe_limit = max(2, min(limit, 100))
+        snapshots = self.list_snapshots(view_name=view_name)
+        if len(snapshots) < 2:
+            raise NotFoundError(
+                f"At least 2 snapshots are required for view '{view_name}' to build a trend."
+            )
+
+        selected = snapshots[:safe_limit]
+        ordered = list(reversed(selected))
+        full_entries = [self.get_snapshot(item.id) for item in ordered]
+        points: list[SnapshotTrendPoint] = []
+
+        previous: SnapshotEntry | None = None
+        for current in full_entries:
+            if previous is None:
+                points.append(
+                    SnapshotTrendPoint(
+                        snapshot_id=current.id,
+                        created_at=current.created_at,
+                        item_count=current.item_count,
+                        added_count_from_previous=0,
+                        removed_count_from_previous=0,
+                        net_change_from_previous=0,
+                    )
+                )
+            else:
+                diff = self.diff_snapshots(previous.id, current.id)
+                points.append(
+                    SnapshotTrendPoint(
+                        snapshot_id=current.id,
+                        created_at=current.created_at,
+                        item_count=current.item_count,
+                        added_count_from_previous=len(diff.added_ids),
+                        removed_count_from_previous=len(diff.removed_ids),
+                        net_change_from_previous=int(diff.summary.get("net_change", 0)),
+                    )
+                )
+            previous = current
+
+        return SnapshotTrendResponse(
+            view_name=view_name,
+            compared_pairs=max(len(points) - 1, 0),
+            points=points,
+        )
+
+    def export_snapshot_trend(self, view_name: str, limit: int = 5) -> dict[str, str]:
+        trend = self.snapshot_trend(view_name=view_name, limit=limit)
+        return self.export_service.export_snapshot_trend(trend)
 
     def _get_latest_snapshot_for_view(self, view_name: str) -> SnapshotEntry | None:
         snapshots = self.list_snapshots(view_name=view_name)

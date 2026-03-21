@@ -453,6 +453,26 @@ def snapshots_digest_export(
     typer.echo(json.dumps(paths, ensure_ascii=False, indent=2))
 
 
+@snapshots_app.command("trend")
+def snapshots_trend(
+    view_name: str = typer.Option(..., "--view"),
+    limit: int = typer.Option(5, "--limit", min=2, max=100),
+) -> None:
+    container = _container()
+    trend = container.research_service.snapshot_trend(view_name=view_name, limit=limit)
+    typer.echo(trend.model_dump_json(indent=2))
+
+
+@snapshots_app.command("trend-export")
+def snapshots_trend_export(
+    view_name: str = typer.Option(..., "--view"),
+    limit: int = typer.Option(5, "--limit", min=2, max=100),
+) -> None:
+    container = _container()
+    paths = container.research_service.export_snapshot_trend(view_name=view_name, limit=limit)
+    typer.echo(json.dumps(paths, ensure_ascii=False, indent=2))
+
+
 @history_app.command("list")
 def history_list(
     item_type: Optional[str] = typer.Option(

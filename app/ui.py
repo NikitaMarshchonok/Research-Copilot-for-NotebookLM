@@ -500,6 +500,41 @@ with digest_col_2:
         except requests.RequestException as exc:
             st.error(f"Snapshot digest export failed: {exc}")
 
+st.subheader("Snapshot Trend")
+trend_view_name = st.text_input(
+    "Trend view name",
+    value=(sorted(search_view_map.keys())[0] if search_view_map else ""),
+    key="snapshot_trend_view_name",
+)
+trend_limit = st.slider("Trend snapshots limit", min_value=2, max_value=20, value=5, step=1)
+trend_col_1, trend_col_2 = st.columns(2)
+with trend_col_1:
+    if st.button("Generate Snapshot Trend"):
+        if not trend_view_name.strip():
+            st.error("Provide a view name for trend report.")
+        else:
+            try:
+                trend = api_post(
+                    "/snapshots/trend",
+                    {"view_name": trend_view_name.strip(), "limit": trend_limit},
+                )
+                st.json(trend)
+            except requests.RequestException as exc:
+                st.error(f"Snapshot trend failed: {exc}")
+with trend_col_2:
+    if st.button("Export Snapshot Trend"):
+        if not trend_view_name.strip():
+            st.error("Provide a view name for trend report.")
+        else:
+            try:
+                trend_export = api_post(
+                    "/snapshots/trend/export",
+                    {"view_name": trend_view_name.strip(), "limit": trend_limit},
+                )
+                st.json(trend_export)
+            except requests.RequestException as exc:
+                st.error(f"Snapshot trend export failed: {exc}")
+
 st.subheader("Artifacts Index")
 artifact_filter = st.selectbox(
     "Artifact type filter",
