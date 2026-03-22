@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import shutil
 from typing import List, Optional
 
 import typer
@@ -42,6 +43,39 @@ def _container():
     return container
 
 
+def _status_marker(condition: bool) -> str:
+    return "OK" if condition else "WARN"
+
+
+def _doctor_checks(container, npx_path: str | None) -> tuple[str, str, list[tuple[str, bool, str]]]:
+    settings = container.settings
+    workspace = container.workspace_service.get_current_response()
+    mcp_path = settings.root_dir / ".cursor" / "mcp.json"
+    checks: list[tuple[str, bool, str]] = [
+        ("data_path exists", workspace.data_path.exists(), str(workspace.data_path)),
+        ("outputs_path exists", workspace.outputs_path.exists(), str(workspace.outputs_path)),
+        (
+            "workspaces_path exists",
+            settings.workspaces_path.exists(),
+            str(settings.workspaces_path),
+        ),
+        ("cursor mcp config exists", mcp_path.exists(), str(mcp_path)),
+        ("npx installed", npx_path is not None, npx_path or "npx not found"),
+    ]
+
+    bridge_mode = settings.notebooklm_connector_mode.strip().lower() == "bridge"
+    bridge_command = settings.notebooklm_bridge_command.strip()
+    if bridge_mode:
+        checks.append(
+            (
+                "bridge command configured",
+                bool(bridge_command),
+                bridge_command or "NOTEBOOKLM_BRIDGE_COMMAND is empty",
+            )
+        )
+    return workspace.active_workspace, settings.notebooklm_connector_mode, checks
+
+
 @app.command("init")
 def init_project() -> None:
     container = _container()
@@ -56,6 +90,25 @@ def init_project() -> None:
         f"Initialized workspace '{container.active_workspace}' "
         "(notebooks, history, templates, bundle presets, search views, snapshots, outputs)."
     )
+
+
+@app.command("doctor")
+def doctor() -> None:
+    container = _container()
+    active_workspace, connector_mode, checks = _doctor_checks(
+        container=container,
+        npx_path=shutil.which("npx"),
+    )
+
+    typer.echo("Research Copilot Doctor")
+    typer.echo(f"- active workspace: {active_workspace}")
+    typer.echo(f"- connector mode: {connector_mode}")
+    for name, condition, detail in checks:
+        typer.echo(f"- [{_status_marker(condition)}] {name}: {detail}")
+
+    has_warnings = any(not condition for _, condition, _ in checks)
+    if has_warnings:
+        raise typer.Exit(code=1)
 
 
 @notebooks_app.command("list")

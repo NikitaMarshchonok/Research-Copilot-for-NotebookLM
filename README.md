@@ -120,6 +120,7 @@ Show help:
 
 ```bash
 python -m app.cli --help
+python -m app.cli doctor
 ```
 
 Notebook registry:
@@ -363,7 +364,19 @@ NOTEBOOKLM_MCP_ASK_TOOL=<exact_tool_name_from_mcp_server>
 pytest
 pytest tests/test_snapshot_e2e_smoke.py -q
 make test-snapshots-smoke
+make doctor
+make preflight
 ```
+
+## Release checklist
+
+Before final demo/hand-off:
+
+1. `python -m app.cli doctor` returns all `OK`.
+2. `make preflight` passes.
+3. FastAPI starts and `/docs` opens.
+4. Streamlit UI loads and can run `ask` and `snapshots update-pack`.
+5. Bridge mode validated if you demo real NotebookLM (`NOTEBOOKLM_CONNECTOR_MODE=bridge`).
 
 ## Security notes
 

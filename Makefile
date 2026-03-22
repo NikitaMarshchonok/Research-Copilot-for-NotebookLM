@@ -1,7 +1,7 @@
 PYTHON ?= python3
 UVICORN ?= uvicorn
 
-.PHONY: install dev test test-snapshots-smoke run-api run-cli init-data
+.PHONY: install dev test test-snapshots-smoke preflight doctor run-api run-cli init-data
 
 install:
 	$(PYTHON) -m pip install -r requirements.txt
@@ -14,6 +14,13 @@ test:
 
 test-snapshots-smoke:
 	pytest tests/test_snapshot_e2e_smoke.py tests/test_snapshot_api_extended.py -q
+
+doctor:
+	$(PYTHON) -m app.cli doctor
+
+preflight:
+	$(PYTHON) -m app.cli doctor
+	pytest
 
 run-api:
 	$(UVICORN) app.main:app --reload --host 127.0.0.1 --port 8000
