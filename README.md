@@ -385,6 +385,8 @@ Before final demo/hand-off:
 source .venv/bin/activate
 python -m app.cli init
 make go-live-check
+make demo-seed
+make final-demo
 uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 # new terminal
 streamlit run app/ui.py

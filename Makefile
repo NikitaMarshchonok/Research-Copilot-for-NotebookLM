@@ -1,7 +1,7 @@
 PYTHON ?= python3
 UVICORN ?= uvicorn
 
-.PHONY: install dev test test-snapshots-smoke preflight doctor go-live-check run-api run-cli init-data
+.PHONY: install dev test test-snapshots-smoke preflight doctor go-live-check demo-seed final-demo run-api run-cli init-data
 
 install:
 	$(PYTHON) -m pip install -r requirements.txt
@@ -24,6 +24,11 @@ preflight:
 
 go-live-check:
 	bash scripts/go_live_demo.sh
+
+demo-seed:
+	bash scripts/demo_seed.sh
+
+final-demo: go-live-check demo-seed
 
 run-api:
 	$(UVICORN) app.main:app --reload --host 127.0.0.1 --port 8000
