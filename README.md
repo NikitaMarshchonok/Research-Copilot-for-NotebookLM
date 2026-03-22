@@ -366,6 +366,7 @@ pytest tests/test_snapshot_e2e_smoke.py -q
 make test-snapshots-smoke
 make doctor
 make preflight
+make go-live-check
 ```
 
 ## Release checklist
@@ -377,6 +378,17 @@ Before final demo/hand-off:
 3. FastAPI starts and `/docs` opens.
 4. Streamlit UI loads and can run `ask` and `snapshots update-pack`.
 5. Bridge mode validated if you demo real NotebookLM (`NOTEBOOKLM_CONNECTOR_MODE=bridge`).
+
+## 10-minute go-live flow
+
+```bash
+source .venv/bin/activate
+python -m app.cli init
+make go-live-check
+uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+# new terminal
+streamlit run app/ui.py
+```
 
 ## Security notes
 
