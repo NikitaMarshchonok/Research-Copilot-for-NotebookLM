@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import shutil
+from pathlib import Path
 from typing import List, Optional
 
 import typer
@@ -50,10 +51,12 @@ def _status_marker(condition: bool) -> str:
 def _doctor_checks(container, npx_path: str | None) -> tuple[str, str, list[tuple[str, bool, str]]]:
     settings = container.settings
     workspace = container.workspace_service.get_current_response()
+    data_path = Path(str(workspace.data_path))
+    outputs_path = Path(str(workspace.outputs_path))
     mcp_path = settings.root_dir / ".cursor" / "mcp.json"
     checks: list[tuple[str, bool, str]] = [
-        ("data_path exists", workspace.data_path.exists(), str(workspace.data_path)),
-        ("outputs_path exists", workspace.outputs_path.exists(), str(workspace.outputs_path)),
+        ("data_path exists", data_path.exists(), str(data_path)),
+        ("outputs_path exists", outputs_path.exists(), str(outputs_path)),
         (
             "workspaces_path exists",
             settings.workspaces_path.exists(),

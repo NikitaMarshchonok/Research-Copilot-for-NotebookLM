@@ -1,3 +1,109 @@
 {
-  "items": []
+  "items": [
+    {
+      "id": "51c7a2b7-028c-4276-949d-8f47b9f98cc5",
+      "view_name": "demo-view-20260323-224329",
+      "scope": "history",
+      "item_count": 1,
+      "changelog": {
+        "added_ids": [
+          "d2b4b1c1-ba13-46f7-86a3-015f459eb78e"
+        ],
+        "removed_ids": []
+      },
+      "items": [
+        {
+          "id": "d2b4b1c1-ba13-46f7-86a3-015f459eb78e",
+          "type": "ask",
+          "created_at": "2026-03-23T20:43:30.827179Z",
+          "title": "What is MCP and why is it useful?",
+          "tags": [
+            "demo-20260323-224329"
+          ]
+        }
+      ],
+      "output_markdown_path": "/Users/nikitamarshchonok/Desktop/Research Copilot for Cursor + NotebookLM/outputs/snapshot-demo-view-20260323-224329-51c7a2b7-028c-4276-949d-8f47b9f98cc5-20260323-204331.md",
+      "output_json_path": "/Users/nikitamarshchonok/Desktop/Research Copilot for Cursor + NotebookLM/outputs/snapshot-demo-view-20260323-224329-51c7a2b7-028c-4276-949d-8f47b9f98cc5-20260323-204331.json",
+      "created_at": "2026-03-23T20:43:31.031497Z"
+    },
+    {
+      "id": "88affc31-e023-4151-b92a-25a2e09a58ec",
+      "view_name": "demo-view-20260323-224329",
+      "scope": "history",
+      "item_count": 2,
+      "changelog": {
+        "added_ids": [
+          "21d65d2d-e2d6-445a-a4c3-076e2c7c6789"
+        ],
+        "removed_ids": []
+      },
+      "items": [
+        {
+          "id": "d2b4b1c1-ba13-46f7-86a3-015f459eb78e",
+          "type": "ask",
+          "created_at": "2026-03-23T20:43:30.827179Z",
+          "title": "What is MCP and why is it useful?",
+          "tags": [
+            "demo-20260323-224329"
+          ]
+        },
+        {
+          "id": "21d65d2d-e2d6-445a-a4c3-076e2c7c6789",
+          "type": "ask",
+          "created_at": "2026-03-23T20:43:31.234290Z",
+          "title": "List practical risks for unofficial NotebookLM automation.",
+          "tags": [
+            "demo-20260323-224329"
+          ]
+        }
+      ],
+      "output_markdown_path": "/Users/nikitamarshchonok/Desktop/Research Copilot for Cursor + NotebookLM/outputs/snapshot-demo-view-20260323-224329-88affc31-e023-4151-b92a-25a2e09a58ec-20260323-204331.md",
+      "output_json_path": "/Users/nikitamarshchonok/Desktop/Research Copilot for Cursor + NotebookLM/outputs/snapshot-demo-view-20260323-224329-88affc31-e023-4151-b92a-25a2e09a58ec-20260323-204331.json",
+      "created_at": "2026-03-23T20:43:31.449734Z"
+    },
+    {
+      "id": "76c5fe39-3c9a-429e-a6a0-5f212c944624",
+      "view_name": "demo-view-20260323-224329",
+      "scope": "history",
+      "item_count": 3,
+      "changelog": {
+        "added_ids": [
+          "e906d709-8f35-432e-ae9f-7490df548561"
+        ],
+        "removed_ids": []
+      },
+      "items": [
+        {
+          "id": "d2b4b1c1-ba13-46f7-86a3-015f459eb78e",
+          "type": "ask",
+          "created_at": "2026-03-23T20:43:30.827179Z",
+          "title": "What is MCP and why is it useful?",
+          "tags": [
+            "demo-20260323-224329"
+          ]
+        },
+        {
+          "id": "21d65d2d-e2d6-445a-a4c3-076e2c7c6789",
+          "type": "ask",
+          "created_at": "2026-03-23T20:43:31.234290Z",
+          "title": "List practical risks for unofficial NotebookLM automation.",
+          "tags": [
+            "demo-20260323-224329"
+          ]
+        },
+        {
+          "id": "e906d709-8f35-432e-ae9f-7490df548561",
+          "type": "ask",
+          "created_at": "2026-03-23T20:43:31.635338Z",
+          "title": "Give implementation notes for a research workflow.",
+          "tags": [
+            "demo-20260323-224329"
+          ]
+        }
+      ],
+      "output_markdown_path": "/Users/nikitamarshchonok/Desktop/Research Copilot for Cursor + NotebookLM/outputs/snapshot-demo-view-20260323-224329-76c5fe39-3c9a-429e-a6a0-5f212c944624-20260323-204331.md",
+      "output_json_path": "/Users/nikitamarshchonok/Desktop/Research Copilot for Cursor + NotebookLM/outputs/snapshot-demo-view-20260323-224329-76c5fe39-3c9a-429e-a6a0-5f212c944624-20260323-204331.json",
+      "created_at": "2026-03-23T20:43:31.826358Z"
+    }
+  ]
 }

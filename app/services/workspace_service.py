@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
+from pathlib import Path
 
 from app.core.config import Settings
 from app.core.exceptions import NotFoundError, ValidationAppError
@@ -23,6 +24,7 @@ class WorkspaceService:
         self.settings = settings
         self.registry_store = registry_store
         self.registry_store.ensure()
+        Path(self.settings.workspaces_path).mkdir(parents=True, exist_ok=True)
         self._ensure_default_workspace()
 
     def _ensure_default_workspace(self) -> None:

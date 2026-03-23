@@ -1,3 +1,16 @@
 {
-  "items": []
+  "items": [
+    {
+      "id": "b91cb644-6074-4d24-bbbd-61037112107a",
+      "name": "demo-view-20260323-224329",
+      "scope": "history",
+      "item_type": "ask",
+      "template_name": null,
+      "tag": "demo-20260323-224329",
+      "query": null,
+      "description": "Demo generated view",
+      "created_at": "2026-03-23T20:43:30.483344Z",
+      "updated_at": "2026-03-23T20:43:30.483490Z"
+    }
+  ]
 }

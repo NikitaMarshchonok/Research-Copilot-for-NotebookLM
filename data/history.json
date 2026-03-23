@@ -1,3 +1,64 @@
 {
-  "items": []
+  "items": [
+    {
+      "type": "ask",
+      "payload": {
+        "id": "d2b4b1c1-ba13-46f7-86a3-015f459eb78e",
+        "notebook_id": "23321ee7-063a-49a0-8643-b32ef43a40f3",
+        "notebook_url": "https://notebooklm.google.com/notebook/20260323-224329",
+        "question": "What is MCP and why is it useful?",
+        "answer": "Stub response. Configure bridge mode to query NotebookLM MCP.\n\nNotebook: https://notebooklm.google.com/notebook/20260323-224329\nQuestion: What is MCP and why is it useful?\n\nOutput format requirement: Give a concise structured summary with key points.",
+        "sources": [
+          "https://notebooklm.google.com/notebook/20260323-224329"
+        ],
+        "artifact_type": "summary",
+        "tags": [
+          "demo-20260323-224329"
+        ],
+        "created_at": "2026-03-23T20:43:30.827179Z",
+        "output_markdown_path": "/Users/nikitamarshchonok/Desktop/Research Copilot for Cursor + NotebookLM/outputs/answer-what-is-mcp-and-why-is-it-useful-20260323-204330.md",
+        "output_json_path": "/Users/nikitamarshchonok/Desktop/Research Copilot for Cursor + NotebookLM/outputs/answer-what-is-mcp-and-why-is-it-useful-20260323-204330.json"
+      }
+    },
+    {
+      "type": "ask",
+      "payload": {
+        "id": "21d65d2d-e2d6-445a-a4c3-076e2c7c6789",
+        "notebook_id": "23321ee7-063a-49a0-8643-b32ef43a40f3",
+        "notebook_url": "https://notebooklm.google.com/notebook/20260323-224329",
+        "question": "List practical risks for unofficial NotebookLM automation.",
+        "answer": "Stub response. Configure bridge mode to query NotebookLM MCP.\n\nNotebook: https://notebooklm.google.com/notebook/20260323-224329\nQuestion: List practical risks for unofficial NotebookLM automation.\n\nOutput format requirement: Answer as FAQ with short Q/A pairs.",
+        "sources": [
+          "https://notebooklm.google.com/notebook/20260323-224329"
+        ],
+        "artifact_type": "faq",
+        "tags": [
+          "demo-20260323-224329"
+        ],
+        "created_at": "2026-03-23T20:43:31.234290Z",
+        "output_markdown_path": "/Users/nikitamarshchonok/Desktop/Research Copilot for Cursor + NotebookLM/outputs/answer-list-practical-risks-for-unofficial-notebooklm-automation-20260323-204331.md",
+        "output_json_path": "/Users/nikitamarshchonok/Desktop/Research Copilot for Cursor + NotebookLM/outputs/answer-list-practical-risks-for-unofficial-notebooklm-automation-20260323-204331.json"
+      }
+    },
+    {
+      "type": "ask",
+      "payload": {
+        "id": "e906d709-8f35-432e-ae9f-7490df548561",
+        "notebook_id": "23321ee7-063a-49a0-8643-b32ef43a40f3",
+        "notebook_url": "https://notebooklm.google.com/notebook/20260323-224329",
+        "question": "Give implementation notes for a research workflow.",
+        "answer": "Stub response. Configure bridge mode to query NotebookLM MCP.\n\nNotebook: https://notebooklm.google.com/notebook/20260323-224329\nQuestion: Give implementation notes for a research workflow.\n\nOutput format requirement: Focus on practical implementation notes and risks.",
+        "sources": [
+          "https://notebooklm.google.com/notebook/20260323-224329"
+        ],
+        "artifact_type": "implementation_notes",
+        "tags": [
+          "demo-20260323-224329"
+        ],
+        "created_at": "2026-03-23T20:43:31.635338Z",
+        "output_markdown_path": "/Users/nikitamarshchonok/Desktop/Research Copilot for Cursor + NotebookLM/outputs/answer-give-implementation-notes-for-a-research-workflow-20260323-204331.md",
+        "output_json_path": "/Users/nikitamarshchonok/Desktop/Research Copilot for Cursor + NotebookLM/outputs/answer-give-implementation-notes-for-a-research-workflow-20260323-204331.json"
+      }
+    }
+  ]
 }

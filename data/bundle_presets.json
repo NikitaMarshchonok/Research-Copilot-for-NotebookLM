@@ -1,3 +1,38 @@
 {
-  "items": []
+  "items": [
+    {
+      "id": "5455c9a0-ac6c-4f90-b9d6-6c40b64c0322",
+      "name": "article-pack",
+      "description": "Balanced pack for article drafting.",
+      "item_types": [
+        "research",
+        "ask",
+        "batch_research"
+      ],
+      "created_at": "2026-03-23T20:42:28.923208Z",
+      "updated_at": "2026-03-23T20:42:28.923351Z"
+    },
+    {
+      "id": "ecda50fa-2c1f-4ffa-9a94-b6cdcb53f76d",
+      "name": "tech-brief-pack",
+      "description": "Focus on research and batch summaries.",
+      "item_types": [
+        "research",
+        "batch_research"
+      ],
+      "created_at": "2026-03-23T20:42:28.923509Z",
+      "updated_at": "2026-03-23T20:42:28.923510Z"
+    },
+    {
+      "id": "e5493144-94e1-41eb-a139-ec878de6d254",
+      "name": "study-pack",
+      "description": "Study-oriented pack with ask + research.",
+      "item_types": [
+        "research",
+        "ask"
+      ],
+      "created_at": "2026-03-23T20:42:28.923520Z",
+      "updated_at": "2026-03-23T20:42:28.923520Z"
+    }
+  ]
 }

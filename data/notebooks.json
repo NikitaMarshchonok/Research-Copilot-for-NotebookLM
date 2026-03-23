@@ -1,4 +1,16 @@
 {
-  "active_notebook_id": null,
-  "items": []
+  "active_notebook_id": "23321ee7-063a-49a0-8643-b32ef43a40f3",
+  "items": [
+    {
+      "id": "23321ee7-063a-49a0-8643-b32ef43a40f3",
+      "name": "Demo Notebook 20260323-224329",
+      "url": "https://notebooklm.google.com/notebook/20260323-224329",
+      "tags": [
+        "demo-20260323-224329"
+      ],
+      "description": "Auto demo seed",
+      "created_at": "2026-03-23T20:43:30.129226Z",
+      "updated_at": "2026-03-23T20:43:30.285343Z"
+    }
+  ]
 }

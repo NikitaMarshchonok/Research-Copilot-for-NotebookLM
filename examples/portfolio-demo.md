@@ -24,6 +24,41 @@ Research Copilot is a **local orchestration layer** over NotebookLM: it manages 
 
 ---
 
+## Recorded run (automated)
+
+This block is from an actual **`make final-demo`** execution in the repo (stub connector, default workspace).  
+Re-run `make final-demo` anytime; filenames will change with a new timestamp — update this section if you want README to stay in sync.
+
+| Field | Value |
+|------|--------|
+| **Date** | 2026-03-23 |
+| **Tag** | `demo-20260323-224329` |
+| **Saved view** | `demo-view-20260323-224329` |
+| **Active notebook id** | `23321ee7-063a-49a0-8643-b32ef43a40f3` |
+
+**Latest diff brief** (verbatim):
+
+```text
+View 'demo-view-20260323-224329' grew: 2 -> 3 (net +1), churn 50.0%, retention 66.7%; added 1, removed 0.
+Top added: e906d709-8f35-432e-ae9f-7490df548561
+Top removed: -
+```
+
+**Update pack export** (paths relative to repo root):
+
+- `outputs/snapshot-update-pack-demo-view-20260323-224329-update-pack-20260323-204332.md`
+- `outputs/snapshot-update-pack-demo-view-20260323-224329-update-pack-20260323-204332.json`
+
+**Example `ask` exports** (same run):
+
+- `outputs/answer-what-is-mcp-and-why-is-it-useful-20260323-204330.md`
+- `outputs/answer-list-practical-risks-for-unofficial-notebooklm-automation-20260323-204331.md`
+- `outputs/answer-give-implementation-notes-for-a-research-workflow-20260323-204331.md`
+
+> Timestamps in filenames use UTC (`204330` etc.) while the demo tag uses local stamp (`224329`) — both come from the same run.
+
+---
+
 ## How this run was produced (copy-paste)
 
 ```bash

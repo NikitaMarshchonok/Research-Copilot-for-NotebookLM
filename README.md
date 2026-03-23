@@ -100,6 +100,8 @@ research-copilot/
 │   └── workspaces.json
 ├── outputs/
 │   └── .gitkeep
+├── workspaces/
+│   └── .gitkeep
 ├── examples/
 │   └── portfolio-demo.md
 ├── scripts/
