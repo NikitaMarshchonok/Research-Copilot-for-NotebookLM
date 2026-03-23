@@ -19,10 +19,36 @@ No custom RAG backend, no vector DB, no embeddings in MVP.
 - pytest
 - Streamlit (minimal UI for stage 3)
 
+## Portfolio demo pack
+
+This repository includes starter folders for showcase materials:
+
+- `assets/` - GIF/screenshots for README.
+- `examples/` - short narrative with links to real generated outputs.
+
+Suggested asset filenames:
+
+- `assets/demo-flow.gif`
+- `assets/ui-dashboard.png`
+- `assets/api-docs.png`
+- `assets/outputs-sample.png`
+
+Example markdown snippet for README:
+
+```md
+## Demo
+
+![Flow demo](assets/demo-flow.gif)
+![UI](assets/ui-dashboard.png)
+![API docs](assets/api-docs.png)
+```
+
 ## Project structure
 
 ```text
 research-copilot/
+├── assets/
+│   └── README.md
 ├── .cursor/
 │   └── mcp.json
 ├── app/
@@ -74,7 +100,11 @@ research-copilot/
 │   └── workspaces.json
 ├── outputs/
 │   └── .gitkeep
+├── examples/
+│   └── portfolio-demo.md
 ├── scripts/
+│   ├── demo_seed.sh
+│   ├── go_live_demo.sh
 │   └── notebooklm_bridge.py
 ├── tests/
 │   ├── test_artifacts.py
