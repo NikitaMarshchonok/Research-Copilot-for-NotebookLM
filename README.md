@@ -10,6 +10,24 @@ The project follows a **thin orchestration-layer** approach:
 
 No custom RAG backend, no vector DB, no embeddings in MVP.
 
+## Who it is for
+
+- Developers and analysts who already use **NotebookLM** and want a **local** way to register notebooks, run structured asks/research, export **Markdown/JSON**, and track changes via **snapshots / diffs / update packs**.
+- Cursor users who wire **NotebookLM MCP** in the editor and want a thin Python layer for persistence and reporting.
+
+## Non-goals (MVP)
+
+- No custom vector DB, embeddings, or self-hosted RAG.
+- No multi-tenant SaaS, billing, or production-grade API hardening by default (run API/UI on `127.0.0.1` for local use).
+
+## CI
+
+Tests run on **GitHub Actions** (`.github/workflows/ci.yml`) on push/PR to `main` or `master`. After you publish the repo, you can add a status badge in this README pointing at your fork.
+
+## Golden demo (real NotebookLM)
+
+Stub mode is great for CI and first clone. For a **portfolio “wow” demo**, switch to **bridge** mode, run `make demo-seed` (or your own asks), and capture 1 grounded answer + paths under `outputs/`. See `examples/portfolio-demo.md` and **Recorded run** vs **bridge** notes there.
+
 ## Stack
 
 - Python 3.11+
@@ -47,6 +65,9 @@ Example markdown snippet for README:
 
 ```text
 research-copilot/
+├── .github/
+│   └── workflows/
+│       └── ci.yml
 ├── assets/
 │   └── README.md
 ├── .cursor/
@@ -128,7 +149,9 @@ research-copilot/
 ├── .gitignore
 ├── Makefile
 ├── pyproject.toml
-└── requirements.txt
+├── requirements.txt
+├── CONTRIBUTING.md
+└── SECURITY.md
 ```
 
 ## Setup on macOS
