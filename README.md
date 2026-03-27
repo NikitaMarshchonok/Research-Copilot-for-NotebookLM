@@ -24,6 +24,10 @@ No custom RAG backend, no vector DB, no embeddings in MVP.
 
 Tests run on **GitHub Actions** (`.github/workflows/ci.yml`) on push/PR to `main` or `master`. After you publish the repo, you can add a status badge in this README pointing at your fork.
 
+Optional: in GitHub repo settings, enable **branch protection** and require the `test` job to pass before merge.
+
+See [CHANGELOG.md](CHANGELOG.md) for release notes over time. Contributing: [CONTRIBUTING.md](CONTRIBUTING.md).
+
 ## Golden demo (real NotebookLM)
 
 Stub mode is great for CI and first clone. For a **portfolio “wow” demo**, switch to **bridge** mode, run `make demo-seed` (or your own asks), and capture 1 grounded answer + paths under `outputs/`. See `examples/portfolio-demo.md` and **Recorded run** vs **bridge** notes there.
@@ -150,6 +154,7 @@ research-copilot/
 ├── Makefile
 ├── pyproject.toml
 ├── requirements.txt
+├── CHANGELOG.md
 ├── CONTRIBUTING.md
 └── SECURITY.md
 ```
